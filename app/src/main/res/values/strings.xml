@@ -8591,4 +8591,12 @@
     <plurals name="market_time_years_ago">
         <item quantity="other">%1$d 年前</item>
     </plurals>
+    <string name="mcp_publish_login_required">GitHub 登录后才能发布 MCP。</string>
+    <string name="token_weekday_0">一</string>
+    <string name="token_weekday_1">二</string>
+    <string name="token_weekday_2">三</string>
+    <string name="token_weekday_3">四</string>
+    <string name="token_weekday_4">五</string>
+    <string name="token_weekday_5">六</string>
+    <string name="token_weekday_6">日</string>
 </resources>

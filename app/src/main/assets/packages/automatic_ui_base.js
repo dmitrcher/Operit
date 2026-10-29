@@ -98,10 +98,12 @@
         }
     ]
 }*/
+const L = (zh, en) => (String(getLang() ?? "").toLowerCase().startsWith("zh") ? zh : en);
+
 const UIAutomationTools = (function () {
     async function get_page_info(params) {
         const result = (await UINode.getCurrentPage()).toFormattedString();
-        return { success: true, message: '成功获取页面信息', data: result };
+        return { success: true, message: L('成功获取页面信息', 'Successfully retrieved page info'), data: result };
     }
     async function get_page_screenshot_image(params) {
         try {
@@ -115,7 +117,7 @@ const UIAutomationTools = (function () {
             const imageLink = NativeInterface.registerImageFromPath(filePath);
             return {
                 success: true,
-                message: `截图已保存到 ${filePath}`,
+                message: L(`截图已保存到 ${filePath}`, `Screenshot saved to ${filePath}`),
                 data: {
                     file_path: filePath,
                     image_link: imageLink,
@@ -127,13 +129,13 @@ const UIAutomationTools = (function () {
             console.error(`获取屏幕截图失败: ${error.message}`);
             return {
                 success: false,
-                message: `获取屏幕截图失败: ${error.message}`,
+                message: L(`获取屏幕截图失败: ${error.message}`, `Failed to get screenshot: ${error.message}`),
             };
         }
     }
     async function tap(params) {
         const result = await Tools.UI.tap(params.x, params.y);
-        return { success: true, message: '点击操作成功', data: result };
+        return { success: true, message: L('点击操作成功', 'Tap succeeded'), data: result };
     }
     async function double_tap(params) {
         const first = await Tools.UI.tap(params.x, params.y);
@@ -141,40 +143,40 @@ const UIAutomationTools = (function () {
         const second = await Tools.UI.tap(params.x, params.y);
         return {
             success: true,
-            message: '双击操作成功',
+            message: L('双击操作成功', 'Double tap succeeded'),
             data: { first, second },
         };
     }
     async function long_press(params) {
         const result = await Tools.UI.longPress(params.x, params.y);
-        return { success: true, message: '长按操作成功', data: result };
+        return { success: true, message: L('长按操作成功', 'Long press succeeded'), data: result };
     }
     async function click_element(params) {
         const result = await Tools.UI.clickElement(params);
-        return { success: true, message: '点击元素操作成功', data: result };
+        return { success: true, message: L('点击元素操作成功', 'Element click succeeded'), data: result };
     }
     async function set_input_text(params) {
         const result = await Tools.UI.setText(params.text);
-        return { success: true, message: '输入文本操作成功', data: result };
+        return { success: true, message: L('输入文本操作成功', 'Text input succeeded'), data: result };
     }
     async function press_key(params) {
         const result = await Tools.UI.pressKey(params.key_code);
-        return { success: true, message: '按键操作成功', data: result };
+        return { success: true, message: L('按键操作成功', 'Key press succeeded'), data: result };
     }
     async function swipe(params) {
         const result = await Tools.UI.swipe(params.start_x, params.start_y, params.end_x, params.end_y);
-        return { success: true, message: '滑动操作成功', data: result };
+        return { success: true, message: L('滑动操作成功', 'Swipe succeeded'), data: result };
     }
     async function app_launch(params) {
         if (!params.package_name) {
-            return { success: false, message: '必须提供package_name参数' };
+            return { success: false, message: L('必须提供package_name参数', 'The package_name parameter is required') };
         }
         try {
             const startResult = await Tools.System.startApp(params.package_name);
             if (startResult && startResult.success) {
                 return {
                     success: true,
-                    message: '应用启动成功',
+                    message: L('应用启动成功', 'App launched successfully'),
                     data: {
                         operation: startResult,
                     },
@@ -183,7 +185,7 @@ const UIAutomationTools = (function () {
             const appList = await Tools.System.listApps(false);
             return {
                 success: false,
-                message: '未能启动应用，可能未安装或无法找到启动入口。已返回当前安装的应用列表。',
+                message: L('未能启动应用，可能未安装或无法找到启动入口。已返回当前安装的应用列表。', 'Could not launch the app; it may not be installed or has no launch entry. The list of installed apps is returned.'),
                 data: {
                     operation: startResult,
                     installed_apps: appList,
@@ -196,7 +198,7 @@ const UIAutomationTools = (function () {
                 const appList = await Tools.System.listApps(false);
                 return {
                     success: false,
-                    message: `启动应用时发生错误: ${error.message}。已返回当前安装的应用列表。`,
+                    message: L(`启动应用时发生错误: ${error.message}。已返回当前安装的应用列表。`, `Error while launching app: ${error.message}. The list of installed apps is returned.`),
                     data: {
                         installed_apps: appList,
                     },
@@ -206,7 +208,7 @@ const UIAutomationTools = (function () {
                 console.error(`获取应用列表失败: ${listError.message}`);
                 return {
                     success: false,
-                    message: `启动应用失败且无法获取应用列表: ${listError.message}`,
+                    message: L(`启动应用失败且无法获取应用列表: ${listError.message}`, `App launch failed and the app list could not be retrieved: ${listError.message}`),
                 };
             }
         }
@@ -220,7 +222,7 @@ const UIAutomationTools = (function () {
             console.error(`Tool ${func.name} failed unexpectedly`, error);
             complete({
                 success: false,
-                message: `工具执行时发生意外错误: ${error.message}`,
+                message: L(`工具执行时发生意外错误: ${error.message}`, `Unexpected error while executing tool: ${error.message}`),
             });
         }
     }

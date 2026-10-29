@@ -75,6 +75,8 @@ import kotlinx.coroutines.withTimeoutOrNull
  * - 热力色阶 = 未激活灰格 + 主色 5 档透明度阶；
  * - 视图模式（每日/每周/累计）由页面顶部三段式选择器驱动，本卡只负责呈现。
  */
+private val WEEKDAY_RES = intArrayOf(R.string.token_weekday_0, R.string.token_weekday_1, R.string.token_weekday_2, R.string.token_weekday_3, R.string.token_weekday_4, R.string.token_weekday_5, R.string.token_weekday_6)
+
 @Composable
 internal fun TokenActivitySection(
     state: TokenActivityUiState,
@@ -159,7 +161,7 @@ private fun TokenActivityDailyHeatmap(
     val monthLabelHeight = 20.dp
     val weekdayLabelWidth = 24.dp
     val heatmapColumnGap = 6.dp
-    val weekdayLabels = listOf("一", "二", "三", "四", "五", "六", "日")
+    val weekdayLabels = (0..6).map { stringResource(WEEKDAY_RES[it]) }
     val scroll = rememberScrollState()
     val palette = LocalTokenStatsColors.current
     // 色阶：level 0 = 未激活灰格；level 1..5 = 主色透明度阶（少→多）

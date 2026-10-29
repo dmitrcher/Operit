@@ -8616,4 +8616,12 @@
         <item quantity="one">%1$d year ago</item>
         <item quantity="other">%1$d years ago</item>
     </plurals>
+    <string name="mcp_publish_login_required">Sign in with GitHub to publish MCP.</string>
+    <string name="token_weekday_0">Mon</string>
+    <string name="token_weekday_1">Tue</string>
+    <string name="token_weekday_2">Wed</string>
+    <string name="token_weekday_3">Thu</string>
+    <string name="token_weekday_4">Fri</string>
+    <string name="token_weekday_5">Sat</string>
+    <string name="token_weekday_6">Sun</string>
 </resources>

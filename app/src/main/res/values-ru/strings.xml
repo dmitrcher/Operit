@@ -7833,4 +7833,12 @@
         <item quantity="many">%1$d лет назад</item>
         <item quantity="other">%1$d года назад</item>
     </plurals>
+    <string name="mcp_publish_login_required">Чтобы опубликовать MCP, войдите через GitHub.</string>
+    <string name="token_weekday_0">Пн</string>
+    <string name="token_weekday_1">Вт</string>
+    <string name="token_weekday_2">Ср</string>
+    <string name="token_weekday_3">Чт</string>
+    <string name="token_weekday_4">Пт</string>
+    <string name="token_weekday_5">Сб</string>
+    <string name="token_weekday_6">Вс</string>
 </resources>
