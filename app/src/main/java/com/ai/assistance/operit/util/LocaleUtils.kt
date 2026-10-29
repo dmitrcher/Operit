@@ -26,6 +26,7 @@ object LocaleUtils {
         const val INDONESIAN = "id"
         const val PORTUGUESE_BRAZIL = "pt-BR"
         const val ROMANIAN = "ro"
+        const val RUSSIAN = "ru"
     }
 
     private val legacyLanguageCodeAliases =
@@ -54,7 +55,8 @@ object LocaleUtils {
                             "Portuguese (Brazil)",
                             "Português (Brasil)"
                     ),
-                    Language(LanguageCodes.ROMANIAN, "Romanian", "Română")
+                    Language(LanguageCodes.ROMANIAN, "Romanian", "Română"),
+                    Language(LanguageCodes.RUSSIAN, "Russian", "Русский")
             )
 
     private val supportedLanguageCodes =
@@ -92,10 +94,17 @@ object LocaleUtils {
     }
 
     /**
-     * 日本語で未翻訳の項目は英語リソースを使用し、中国語の既定リソースを表示しない。
+     * Untranslated strings in any non-Chinese locale fall back to English resources,
+     * so the Chinese default resources are never shown to non-Chinese users.
      */
+    private fun needsEnglishFallback(locale: Locale): Boolean {
+        val language = locale.language
+        return !language.equals(LanguageCodes.CHINESE, ignoreCase = true) &&
+                !language.equals(LanguageCodes.ENGLISH, ignoreCase = true)
+    }
+
     fun createCompatLocaleList(locale: Locale): LocaleListCompat {
-        return if (locale.language.equals(LanguageCodes.JAPANESE, ignoreCase = true)) {
+        return if (needsEnglishFallback(locale)) {
             LocaleListCompat.forLanguageTags("${locale.toLanguageTag()},${LanguageCodes.ENGLISH}")
         } else {
             LocaleListCompat.create(locale)
@@ -103,7 +112,7 @@ object LocaleUtils {
     }
 
     fun createPlatformLocaleList(locale: Locale): LocaleList {
-        return if (locale.language.equals(LanguageCodes.JAPANESE, ignoreCase = true)) {
+        return if (needsEnglishFallback(locale)) {
             LocaleList(locale, Locale.ENGLISH)
         } else {
             LocaleList(locale)
