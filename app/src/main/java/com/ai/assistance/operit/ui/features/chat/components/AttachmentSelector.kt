@@ -781,7 +781,7 @@ fun PackageSelectorDialog(
                                                     color = MaterialTheme.colorScheme.onSurface
                                             )
                                             Text(
-                                                    text = buildAttachmentPackageSubtitle(option),
+                                                    text = buildAttachmentPackageSubtitle(context, option),
                                                     style = MaterialTheme.typography.bodySmall,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                     maxLines = 2,
@@ -852,11 +852,11 @@ private fun buildAttachmentPackageOptions(
     return options.values.toList()
 }
 
-private fun buildAttachmentPackageSubtitle(option: AttachmentPackageOption): String {
+private fun buildAttachmentPackageSubtitle(context: Context, option: AttachmentPackageOption): String {
     val typeLabel =
             when (option.kind) {
-                AttachmentPackageKind.PACKAGE -> "包"
-                AttachmentPackageKind.SKILL -> "技能"
+                AttachmentPackageKind.PACKAGE -> context.getString(R.string.attachment_kind_package)
+                AttachmentPackageKind.SKILL -> context.getString(R.string.attachment_kind_skill)
                 AttachmentPackageKind.MCP -> "MCP"
             }
     return if (option.description.isBlank()) {

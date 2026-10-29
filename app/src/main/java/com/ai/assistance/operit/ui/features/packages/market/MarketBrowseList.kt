@@ -1,6 +1,8 @@
 package com.ai.assistance.operit.ui.features.packages.market
 
 import androidx.annotation.StringRes
+import android.content.Context
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -119,6 +121,7 @@ fun <T> MarketBrowseList(
     onScrollPositionChanged: (Int, Int) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
+    val marketContext = LocalContext.current
     val listState = rememberLazyListState(
         initialFirstVisibleItemIndex = initialFirstVisibleItemIndex,
         initialFirstVisibleItemScrollOffset = initialFirstVisibleItemScrollOffset
@@ -172,6 +175,7 @@ fun <T> MarketBrowseList(
                     ) {
                         if (sortOption == MarketSortOption.UPDATED) {
                             groupedMarketItems(
+                                context = marketContext,
                                 items = items,
                                 itemKey = itemKey,
                                 updatedAtSelector = updatedAtSelector,
@@ -284,6 +288,7 @@ fun <T> MarketBrowseList(
 }
 
 private fun <T> LazyListScope.groupedMarketItems(
+    context: Context,
     items: List<T>,
     itemKey: (T) -> Any,
     updatedAtSelector: (T) -> String,
@@ -291,7 +296,7 @@ private fun <T> LazyListScope.groupedMarketItems(
 ) {
     val groupedItems =
         items.groupBy { item ->
-            resolveMarketUpdatedDateLabel(updatedAtSelector(item))
+            resolveMarketUpdatedDateLabel(context, updatedAtSelector(item))
         }
 
     groupedItems.forEach { (dateLabel, groupItems) ->
@@ -315,10 +320,10 @@ private fun MarketBrowseDateHeader(dateLabel: String) {
     )
 }
 
-private fun resolveMarketUpdatedDateLabel(rawUpdatedAt: String): String {
+private fun resolveMarketUpdatedDateLabel(context: Context, rawUpdatedAt: String): String {
     val trimmed = rawUpdatedAt.trim()
     if (trimmed.isBlank()) {
-        return "更早"
+        return context.getString(R.string.market_time_earlier)
     }
 
     parseMarketUpdatedDate(trimmed)?.let { date ->

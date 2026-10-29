@@ -607,6 +607,7 @@ private fun MarketNotificationsPane() {
 
 @Composable
 private fun MarketNotificationCard(notification: MarketV2Notification) {
+    val context = LocalContext.current
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -633,18 +634,18 @@ private fun MarketNotificationCard(notification: MarketV2Notification) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = notificationKindLabel(notification.kind),
+                        text = notificationKindLabel(context, notification.kind),
                         style = MaterialTheme.typography.labelMedium,
                         color = notificationKindColor(notification.kind)
                     )
                     Text(
-                        text = relativeTime(notification.createdAt),
+                        text = relativeTime(context, notification.createdAt),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )
                 }
                 Text(
-                    text = notification.title.ifBlank { notificationKindLabel(notification.kind) },
+                    text = notification.title.ifBlank { notificationKindLabel(context, notification.kind) },
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 2,
@@ -674,14 +675,14 @@ private fun notificationKindIcon(kind: String): ImageVector {
     }
 }
 
-private fun notificationKindLabel(kind: String): String {
+private fun notificationKindLabel(context: Context, kind: String): String {
     return when (kind) {
-        "comment_new" -> "新评论"
-        "comment_reply" -> "回复了你的评论"
-        "review_approved" -> "已通过审核"
-        "review_rejected" -> "未通过审核"
-        "review_changes" -> "需要修改"
-        "entry_curated" -> "入选精选"
+        "comment_new" -> context.getString(R.string.market_notif_comment_new)
+        "comment_reply" -> context.getString(R.string.market_notif_comment_reply)
+        "review_approved" -> context.getString(R.string.market_notif_review_approved)
+        "review_rejected" -> context.getString(R.string.market_notif_review_rejected)
+        "review_changes" -> context.getString(R.string.market_notif_review_changes)
+        "entry_curated" -> context.getString(R.string.market_notif_entry_curated)
         else -> kind
     }
 }
@@ -698,7 +699,8 @@ private fun notificationKindColor(kind: String): Color {
     }
 }
 
-private fun relativeTime(isoDate: String): String {
+private fun relativeTime(context: Context, isoDate: String): String {
+    val res = context.resources
     if (isoDate.isBlank()) return ""
     return try {
         val instant = java.time.Instant.parse(isoDate)
@@ -706,12 +708,12 @@ private fun relativeTime(isoDate: String): String {
         val duration = java.time.Duration.between(instant, now)
         val seconds = duration.seconds
         when {
-            seconds < 60 -> "刚刚"
-            seconds < 3600 -> "${seconds / 60} 分钟前"
-            seconds < 86400 -> "${seconds / 3600} 小时前"
-            seconds < 2592000 -> "${seconds / 86400} 天前"
-            seconds < 31104000 -> "${seconds / 2592000} 个月前"
-            else -> "${seconds / 31104000} 年前"
+            seconds < 60 -> context.getString(R.string.market_time_just_now)
+            seconds < 3600 -> res.getQuantityString(R.plurals.market_time_minutes_ago, (seconds / 60).toInt(), (seconds / 60).toInt())
+            seconds < 86400 -> res.getQuantityString(R.plurals.market_time_hours_ago, (seconds / 3600).toInt(), (seconds / 3600).toInt())
+            seconds < 2592000 -> res.getQuantityString(R.plurals.market_time_days_ago, (seconds / 86400).toInt(), (seconds / 86400).toInt())
+            seconds < 31104000 -> res.getQuantityString(R.plurals.market_time_months_ago, (seconds / 2592000).toInt(), (seconds / 2592000).toInt())
+            else -> res.getQuantityString(R.plurals.market_time_years_ago, (seconds / 31104000).toInt(), (seconds / 31104000).toInt())
         }
     } catch (e: Exception) {
         isoDate.take(16).replace("T", " ")

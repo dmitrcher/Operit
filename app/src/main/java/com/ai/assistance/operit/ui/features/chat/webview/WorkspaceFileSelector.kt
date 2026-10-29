@@ -268,7 +268,7 @@ fun MentionSuggestionPanel(
                                 icon = Icons.Default.AutoAwesome,
                                 iconTint = mentionPackageColor(suggestion.kind, colors),
                                 title = suggestion.title,
-                                subtitle = buildMentionPackageSubtitle(suggestion),
+                                subtitle = buildMentionPackageSubtitle(LocalContext.current, suggestion),
                                 onClick = { onPackageSelected(suggestion.packageName) },
                             )
                         }
@@ -608,12 +608,12 @@ private fun buildMentionPackageOptions(
     return options.values.toList()
 }
 
-private fun buildMentionPackageSubtitle(suggestion: MentionPackageSuggestion): String {
+private fun buildMentionPackageSubtitle(context: Context, suggestion: MentionPackageSuggestion): String {
     val typeLabel =
         when (suggestion.kind) {
-            MentionPackageKind.PACKAGE -> "工具包"
-            MentionPackageKind.SKILL -> "Skill 包"
-            MentionPackageKind.MCP -> "MCP 包"
+            MentionPackageKind.PACKAGE -> context.getString(R.string.mention_kind_package)
+            MentionPackageKind.SKILL -> context.getString(R.string.mention_kind_skill)
+            MentionPackageKind.MCP -> context.getString(R.string.mention_kind_mcp)
         }
 
     val metaParts = buildList {
