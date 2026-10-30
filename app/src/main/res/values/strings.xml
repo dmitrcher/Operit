@@ -2830,6 +2830,9 @@
     <string name="speech_services_stt_type_sherpa_mnn">Sherpa MNN (本地, 带VAD)</string>
     <string name="speech_services_stt_type_openai">OpenAI STT (远程)</string>
     <string name="speech_services_stt_type_deepgram">Deepgram STT (远程)</string>
+    <string name="speech_services_stt_type_parakeet">本地：Parakeet v3（俄语、英语等 25 种语言）</string>
+    <string name="speech_services_stt_type_fastconformer">本地：FastConformer（俄语、英语等 10 种语言）</string>
+    <string name="speech_services_stt_type_gigaam">本地：GigaAM v3（俄语）</string>
     
     <!-- TTS Cleaner Regex -->
     <string name="speech_services_tts_cleaner_title">TTS 清理正则列表</string>

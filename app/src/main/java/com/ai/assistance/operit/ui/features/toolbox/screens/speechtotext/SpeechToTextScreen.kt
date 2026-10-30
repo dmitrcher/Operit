@@ -183,9 +183,9 @@ fun SpeechToTextScreen(navController: NavController) {
         error = null
         coroutineScope.launch {
             try {
-                // 对于Sherpa引擎，启用连续模式和部分结果
-                val continuousMode = recognitionMode == SpeechServiceFactory.SpeechServiceType.SHERPA_NCNN
-                val partialResults = recognitionMode == SpeechServiceFactory.SpeechServiceType.SHERPA_NCNN
+                // 对于本地引擎，启用连续模式和部分结果
+                val continuousMode = recognitionMode.isLocal
+                val partialResults = recognitionMode.isLocal
                 speechService.startRecognition(selectedLanguage, continuousMode, partialResults)
             } catch (e: Exception) {
                 error = context.getString(R.string.start_recognition_error, e.message ?: "")
@@ -206,14 +206,8 @@ fun SpeechToTextScreen(navController: NavController) {
     
     // 切换识别引擎现在只改变状态，Compose框架会处理后续的重新创建和初始化
     fun switchRecognitionMode() {
-        recognitionMode = when (recognitionMode) {
-            SpeechServiceFactory.SpeechServiceType.SHERPA_NCNN ->
-                SpeechServiceFactory.SpeechServiceType.OPENAI_STT
-            SpeechServiceFactory.SpeechServiceType.OPENAI_STT ->
-                SpeechServiceFactory.SpeechServiceType.DEEPGRAM_STT
-            SpeechServiceFactory.SpeechServiceType.DEEPGRAM_STT ->
-                SpeechServiceFactory.SpeechServiceType.SHERPA_NCNN
-        }
+        val types = SpeechServiceFactory.SpeechServiceType.values()
+        recognitionMode = types[(recognitionMode.ordinal + 1) % types.size]
     }
 
     // 获取当前引擎的显示名称
@@ -222,6 +216,9 @@ fun SpeechToTextScreen(navController: NavController) {
             SpeechServiceFactory.SpeechServiceType.SHERPA_NCNN -> context.getString(R.string.sherpa_ncnn_best)
             SpeechServiceFactory.SpeechServiceType.OPENAI_STT -> context.getString(R.string.speech_services_stt_type_openai)
             SpeechServiceFactory.SpeechServiceType.DEEPGRAM_STT -> context.getString(R.string.speech_services_stt_type_deepgram)
+            SpeechServiceFactory.SpeechServiceType.SHERPA_ONNX_PARAKEET_V3 -> context.getString(R.string.speech_services_stt_type_parakeet)
+            SpeechServiceFactory.SpeechServiceType.SHERPA_ONNX_FASTCONFORMER -> context.getString(R.string.speech_services_stt_type_fastconformer)
+            SpeechServiceFactory.SpeechServiceType.SHERPA_ONNX_GIGAAM_V3 -> context.getString(R.string.speech_services_stt_type_gigaam)
         }
     }
     
@@ -361,7 +358,8 @@ fun SpeechToTextScreen(navController: NavController) {
                 // 切换引擎按钮单独一行
                     Button(
                         onClick = { switchRecognitionMode() },
-                        enabled = !isListening && isInitialized,
+                        // 引擎初始化失败（如云端未配置密钥）时也要能切换到其他引擎
+                        enabled = !isListening,
                     modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.secondaryContainer,

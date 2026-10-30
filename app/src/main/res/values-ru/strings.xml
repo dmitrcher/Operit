@@ -2530,6 +2530,9 @@
     <string name="speech_services_stt_type_sherpa_mnn">Sherpa MNN (локальный, с VAD)</string>
     <string name="speech_services_stt_type_openai">OpenAI STT (удалённый)</string>
     <string name="speech_services_stt_type_deepgram">Deepgram STT (удалённый)</string>
+    <string name="speech_services_stt_type_parakeet">Локально: Parakeet v3 (русский, английский и ещё 23)</string>
+    <string name="speech_services_stt_type_fastconformer">Локально: FastConformer (русский, английский и ещё 8)</string>
+    <string name="speech_services_stt_type_gigaam">Локально: GigaAM v3 (русский)</string>
     <string name="speech_services_tts_cleaner_title">Список регулярных выражений очистки TTS</string>
     <string name="speech_services_tts_cleaner_desc">Удалять совпавший текст по этим регулярным выражениям перед озвучиванием.</string>
     <string name="speech_services_tts_cleaner_placeholder">e.g.: \\[.*?\\]</string>

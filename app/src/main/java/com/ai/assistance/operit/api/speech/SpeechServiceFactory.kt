@@ -12,11 +12,17 @@ object SpeechServiceFactory {
     private const val TAG = "SpeechServiceFactory"
 
     /** 语音识别服务类型 */
-    enum class SpeechServiceType {
+    enum class SpeechServiceType(val isLocal: Boolean) {
         /** 基于Sherpa-ncnn的本地识别实现 */
-        SHERPA_NCNN,
-        OPENAI_STT,
-        DEEPGRAM_STT,
+        SHERPA_NCNN(true),
+        OPENAI_STT(false),
+        DEEPGRAM_STT(false),
+        /** sherpa-onnx NVIDIA Parakeet TDT 0.6B v3，本地多语言（含俄语、英语） */
+        SHERPA_ONNX_PARAKEET_V3(true),
+        /** sherpa-onnx NVIDIA FastConformer，本地 10 种语言（含俄语、英语） */
+        SHERPA_ONNX_FASTCONFORMER(true),
+        /** sherpa-onnx Sber GigaAM v3，本地俄语 */
+        SHERPA_ONNX_GIGAAM_V3(true),
     }
 
     /**
@@ -64,7 +70,11 @@ object SpeechServiceFactory {
         httpConfig: SttHttpConfig,
     ): SpeechService {
         return when (type) {
-            SpeechServiceType.SHERPA_NCNN -> acquireLocalSpeechService(context, type)
+            SpeechServiceType.SHERPA_NCNN,
+            SpeechServiceType.SHERPA_ONNX_PARAKEET_V3,
+            SpeechServiceType.SHERPA_ONNX_FASTCONFORMER,
+            SpeechServiceType.SHERPA_ONNX_GIGAAM_V3,
+            -> acquireLocalSpeechService(context, type)
             SpeechServiceType.OPENAI_STT -> {
                 runBlocking {
                     OpenAISttProvider(
@@ -132,7 +142,15 @@ object SpeechServiceFactory {
                     val service =
                         when (type) {
                             SpeechServiceType.SHERPA_NCNN -> SherpaSpeechProvider(appContext)
-                            else -> throw IllegalArgumentException("Not a local SpeechService type: $type")
+                            SpeechServiceType.SHERPA_ONNX_PARAKEET_V3 ->
+                                SherpaOnnxOfflineSpeechProvider(appContext, SherpaOnnxOfflineSpeechProvider.Model.PARAKEET_V3)
+                            SpeechServiceType.SHERPA_ONNX_FASTCONFORMER ->
+                                SherpaOnnxOfflineSpeechProvider(appContext, SherpaOnnxOfflineSpeechProvider.Model.FASTCONFORMER)
+                            SpeechServiceType.SHERPA_ONNX_GIGAAM_V3 ->
+                                SherpaOnnxOfflineSpeechProvider(appContext, SherpaOnnxOfflineSpeechProvider.Model.GIGAAM_V3)
+                            SpeechServiceType.OPENAI_STT,
+                            SpeechServiceType.DEEPGRAM_STT,
+                            -> throw IllegalArgumentException("Not a local SpeechService type: $type")
                         }
                     LocalEntry(type = type, service = service, refCount = 1).also { localEntry = it }
                 }

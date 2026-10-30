@@ -2774,6 +2774,9 @@
     <string name="speech_services_stt_type_sherpa_mnn">Sherpa MNN (Local, with VAD)</string>
     <string name="speech_services_stt_type_openai">OpenAI STT (Remote)</string>
     <string name="speech_services_stt_type_deepgram">Deepgram STT (Remote)</string>
+    <string name="speech_services_stt_type_parakeet">Local: Parakeet v3 (Russian, English and 23 more)</string>
+    <string name="speech_services_stt_type_fastconformer">Local: FastConformer (Russian, English and 8 more)</string>
+    <string name="speech_services_stt_type_gigaam">Local: GigaAM v3 (Russian)</string>
     
     <!-- TTS Cleaner Regex -->
     <string name="speech_services_tts_cleaner_title">TTS Cleaner Regex List</string>

@@ -1937,7 +1937,7 @@ object SystemToolPromptsInternal {
                                     ToolParameterSchema(
                                         name = "stt_service_type",
                                         type = "string",
-                                        description = "optional, SHERPA_NCNN/OPENAI_STT/DEEPGRAM_STT",
+                                        description = "optional, SHERPA_NCNN/OPENAI_STT/DEEPGRAM_STT/SHERPA_ONNX_PARAKEET_V3/SHERPA_ONNX_FASTCONFORMER/SHERPA_ONNX_GIGAAM_V3",
                                         required = false
                                     ),
                                     ToolParameterSchema(
@@ -4929,7 +4929,7 @@ object SystemToolPromptsInternal {
                                     ToolParameterSchema(
                                         name = "stt_service_type",
                                         type = "string",
-                                        description = "可选，SHERPA_NCNN/OPENAI_STT/DEEPGRAM_STT",
+                                        description = "可选，SHERPA_NCNN/OPENAI_STT/DEEPGRAM_STT/SHERPA_ONNX_PARAKEET_V3/SHERPA_ONNX_FASTCONFORMER/SHERPA_ONNX_GIGAAM_V3",
                                         required = false
                                     ),
                                     ToolParameterSchema(

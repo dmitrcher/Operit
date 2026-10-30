@@ -132,7 +132,9 @@ private fun getOpenSourceLibraries(): List<OpenSourceLibrary> {
         OpenSourceLibrary("sherpa-ncnn", "Real-time speech recognition with Next-gen Kaldi", "Apache-2.0", "https://github.com/k2-fsa/sherpa-ncnn"),
         OpenSourceLibrary("sherpa-mnn", "Speech recognition with MNN backend", "Apache-2.0", "https://github.com/k2-fsa/sherpa-mnn"),
         OpenSourceLibrary("sherpa-onnx", "Speech recognition with ONNX Runtime", "Apache-2.0", "https://github.com/k2-fsa/sherpa-onnx"),
-        OpenSourceLibrary("T-one", "Streaming Russian speech recognition model by T-Software DC", "Apache-2.0", "https://github.com/voicekit-team/T-one"),
+        OpenSourceLibrary("Parakeet TDT 0.6B v3", "NVIDIA multilingual speech recognition model", "CC-BY-4.0", "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"),
+        OpenSourceLibrary("FastConformer multilingual", "NVIDIA speech recognition model for 10 languages", "CC-BY-4.0", "https://catalog.ngc.nvidia.com/orgs/nvidia/teams/nemo/models/stt_multilingual_fastconformer_hybrid_large_pc"),
+        OpenSourceLibrary("GigaAM v3", "Russian speech recognition model by Sber", "MIT", "https://github.com/salute-developers/GigaAM"),
         OpenSourceLibrary("SLF4J", "Simple Logging Facade for Java", "MIT", "https://www.slf4j.org/")
     ).sortedBy { it.name }
 }

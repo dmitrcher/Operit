@@ -2125,11 +2125,7 @@ fun SpeechServicesSettingsScreen(
                             onExpandedChange = { sttDropdownExpanded = it }
                         ) {
                             OutlinedTextField(
-                                value = when(sttServiceTypeInput) {
-                                    SpeechServiceFactory.SpeechServiceType.SHERPA_NCNN -> stringResource(R.string.speech_services_stt_type_sherpa)
-                                    SpeechServiceFactory.SpeechServiceType.OPENAI_STT -> stringResource(R.string.speech_services_stt_type_openai)
-                                    SpeechServiceFactory.SpeechServiceType.DEEPGRAM_STT -> stringResource(R.string.speech_services_stt_type_deepgram)
-                                },
+                                value = sttServiceTypeLabel(sttServiceTypeInput),
                                 onValueChange = {},
                                 readOnly = true,
                                 label = { Text(stringResource(R.string.speech_services_stt_engine)) },
@@ -2146,11 +2142,7 @@ fun SpeechServicesSettingsScreen(
                                     DropdownMenuItem(
                                         text = { 
                                             Text(
-                                                text = when(type) {
-                                                    SpeechServiceFactory.SpeechServiceType.SHERPA_NCNN -> stringResource(R.string.speech_services_stt_type_sherpa)
-                                                    SpeechServiceFactory.SpeechServiceType.OPENAI_STT -> stringResource(R.string.speech_services_stt_type_openai)
-                                                    SpeechServiceFactory.SpeechServiceType.DEEPGRAM_STT -> stringResource(R.string.speech_services_stt_type_deepgram)
-                                                },
+                                                text = sttServiceTypeLabel(type),
                                                 fontWeight = if (sttServiceTypeInput == type) FontWeight.Medium else FontWeight.Normal
                                             ) 
                                         },
@@ -2734,3 +2726,14 @@ private fun SpeechProfileDeleteDialog(
         },
     )
 }
+
+@Composable
+private fun sttServiceTypeLabel(type: SpeechServiceFactory.SpeechServiceType): String =
+    when (type) {
+        SpeechServiceFactory.SpeechServiceType.SHERPA_NCNN -> stringResource(R.string.speech_services_stt_type_sherpa)
+        SpeechServiceFactory.SpeechServiceType.OPENAI_STT -> stringResource(R.string.speech_services_stt_type_openai)
+        SpeechServiceFactory.SpeechServiceType.DEEPGRAM_STT -> stringResource(R.string.speech_services_stt_type_deepgram)
+        SpeechServiceFactory.SpeechServiceType.SHERPA_ONNX_PARAKEET_V3 -> stringResource(R.string.speech_services_stt_type_parakeet)
+        SpeechServiceFactory.SpeechServiceType.SHERPA_ONNX_FASTCONFORMER -> stringResource(R.string.speech_services_stt_type_fastconformer)
+        SpeechServiceFactory.SpeechServiceType.SHERPA_ONNX_GIGAAM_V3 -> stringResource(R.string.speech_services_stt_type_gigaam)
+    }
