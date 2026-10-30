@@ -131,6 +131,8 @@ private fun getOpenSourceLibraries(): List<OpenSourceLibrary> {
         OpenSourceLibrary("kotlin-logging", "Lightweight logging framework for Kotlin", "Apache-2.0", "https://github.com/oshai/kotlin-logging"),
         OpenSourceLibrary("sherpa-ncnn", "Real-time speech recognition with Next-gen Kaldi", "Apache-2.0", "https://github.com/k2-fsa/sherpa-ncnn"),
         OpenSourceLibrary("sherpa-mnn", "Speech recognition with MNN backend", "Apache-2.0", "https://github.com/k2-fsa/sherpa-mnn"),
+        OpenSourceLibrary("sherpa-onnx", "Speech recognition with ONNX Runtime", "Apache-2.0", "https://github.com/k2-fsa/sherpa-onnx"),
+        OpenSourceLibrary("T-one", "Streaming Russian speech recognition model by T-Software DC", "Apache-2.0", "https://github.com/voicekit-team/T-one"),
         OpenSourceLibrary("SLF4J", "Simple Logging Facade for Java", "MIT", "https://www.slf4j.org/")
     ).sortedBy { it.name }
 }

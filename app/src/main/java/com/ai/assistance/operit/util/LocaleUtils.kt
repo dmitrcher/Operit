@@ -166,6 +166,19 @@ object LocaleUtils {
         return getCurrentSystemLanguage(context)
     }
 
+    /**
+     * 语音识别使用的语言标签，跟随应用当前语言
+     * @return 如 zh-CN、en-US、ru-RU；其他语言直接返回应用语言代码
+     */
+    fun getSpeechLanguageTag(context: Context): String {
+        return when (val language = getCurrentLanguage(context)) {
+            LanguageCodes.CHINESE -> "zh-CN"
+            LanguageCodes.ENGLISH -> "en-US"
+            LanguageCodes.RUSSIAN -> "ru-RU"
+            else -> language
+        }
+    }
+
     /** 获取系统当前语言 */
     private fun getCurrentSystemLanguage(context: Context): String {
         return getCurrentSystemLanguageCode(context)

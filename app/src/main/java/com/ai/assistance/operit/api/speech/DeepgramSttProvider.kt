@@ -374,7 +374,7 @@ class DeepgramSttProvider(
 
     override suspend fun getSupportedLanguages(): List<String> =
         withContext(Dispatchers.IO) {
-            return@withContext listOf("zh", "en")
+            return@withContext listOf("zh", "en", "ru")
         }
 
     override suspend fun recognize(audioData: FloatArray) {
@@ -537,6 +537,7 @@ class DeepgramSttProvider(
         return when {
             code.startsWith("zh") -> "zh"
             code.startsWith("en") -> "en"
+            code.startsWith("ru") -> "ru"
             else -> code
         }
     }

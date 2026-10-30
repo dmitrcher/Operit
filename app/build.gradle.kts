@@ -356,6 +356,34 @@ val syncMainAssets by tasks.registering(Sync::class) {
     into(generatedMainAssetsDir)
 }
 
+// sherpa-onnx runtime for the Russian streaming T-one STT model. This AAR links onnxruntime
+// statically into libsherpa-onnx-jni.so, so it does not clash with onnxruntime-android below.
+val sherpaOnnxAarAsset =
+    SttModelAsset(
+        targetPath = "sherpa-onnx-static-link-onnxruntime-2.0.1.aar",
+        sourceUrl = "https://github.com/k2-fsa/sherpa-onnx/releases/download/v2.0.1/sherpa-onnx-static-link-onnxruntime-2.0.1.aar",
+        expectedBytes = 38577050,
+        expectedSha256 = "07e042d97f3a6bd5b7fe74d4eef0513dc01a714b16c15a903250095aba43a575",
+    )
+val generatedSherpaOnnxDir = layout.buildDirectory.dir("generated/sherpa-onnx")
+val sherpaOnnxAarFile = generatedSherpaOnnxDir.map { dir -> dir.file(sherpaOnnxAarAsset.targetPath) }
+
+val syncSherpaOnnxAar by tasks.registering {
+    description = "Downloads and verifies the sherpa-onnx Android AAR used by local Russian STT."
+    group = "build setup"
+    outputs.dir(generatedSherpaOnnxDir)
+
+    doLast {
+        val destination = sherpaOnnxAarFile.get().asFile
+        if (!verifySttModelAsset(destination, sherpaOnnxAarAsset)) {
+            if (destination.exists() && !destination.delete()) {
+                error("Unable to replace invalid sherpa-onnx AAR: ${destination.path}")
+            }
+            downloadSttModelAsset(sherpaOnnxAarAsset, destination)
+        }
+    }
+}
+
 android {
     namespace = "com.ai.assistance.operit"
     compileSdk = 36
@@ -593,6 +621,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics.android)
     // The only vendored artifact is the custom FFmpegKit AAR.
     implementation(files("libs/ffmpeg-kit-local.aar"))
+    implementation(files(sherpaOnnxAarFile).builtBy(syncSherpaOnnxAar))
     implementation("com.arthenica:smart-exception-common:0.2.1")
     implementation("com.arthenica:smart-exception-java:0.2.1")
     implementation(libs.androidx.runtime.android)

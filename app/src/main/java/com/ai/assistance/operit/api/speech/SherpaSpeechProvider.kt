@@ -8,10 +8,16 @@ import android.media.MediaRecorder
 import com.ai.assistance.operit.util.AppLogger
 import com.ai.assistance.operit.util.OperitPaths
 import com.k2fsa.sherpa.ncnn.*
+import com.k2fsa.sherpa.onnx.OnlineModelConfig
+import com.k2fsa.sherpa.onnx.OnlineRecognizer
+import com.k2fsa.sherpa.onnx.OnlineRecognizerConfig
+import com.k2fsa.sherpa.onnx.OnlineStream
+import com.k2fsa.sherpa.onnx.OnlineToneCtcModelConfig
 import com.ai.assistance.operit.api.speech.SpeechPrerollStore
 import java.io.File
 import com.ai.assistance.operit.util.AssetCopyUtils
 import java.io.IOException
+import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -29,16 +35,74 @@ import kotlin.math.log10
 import kotlin.math.max
 
 /**
- * 基于sherpa-ncnn的本地语音识别实现 sherpa-ncnn是一个轻量级、高性能的语音识别引擎，比Whisper更适合移动端 参考:
- * https://github.com/k2-fsa/sherpa-ncnn
+ * 本地流式语音识别实现，按识别语言选择模型：
+ * - zh/en：sherpa-ncnn 中英双语 zipformer（https://github.com/k2-fsa/sherpa-ncnn）
+ * - ru：sherpa-onnx T-one 俄语流式 CTC（https://github.com/k2-fsa/sherpa-onnx）
  */
 @SuppressLint("MissingPermission")
 class SherpaSpeechProvider(private val context: Context) : SpeechService {
     companion object {
         private const val TAG = "SherpaSpeechProvider"
+        private const val SAMPLE_RATE = 16000
+        private const val ZH_EN_MODEL_DIR = "sherpa-ncnn-streaming-zipformer-bilingual-zh-en-2023-02-13"
+        private const val RU_TONE_MODEL_ASSET_DIR = "models/sherpa-onnx-streaming-t-one-russian-2025-09-08"
     }
 
-    private var recognizer: SherpaNcnn? = null
+    /** 本地流式模型 */
+    private enum class LocalSttModel {
+        ZH_EN_ZIPFORMER,
+        RU_TONE_CTC,
+    }
+
+    /** 录音循环所需的流式识别器操作，屏蔽 sherpa-ncnn 与 sherpa-onnx 的 API 差异 */
+    private interface LocalStreamingEngine {
+        val text: String
+        fun acceptSamples(samples: FloatArray)
+        fun isReady(): Boolean
+        fun decode()
+        fun isEndpoint(): Boolean
+        fun inputFinished()
+        fun reset()
+        fun release()
+    }
+
+    private class NcnnEngine(private val recognizer: SherpaNcnn) : LocalStreamingEngine {
+        override val text: String
+            get() = recognizer.text
+        override fun acceptSamples(samples: FloatArray) = recognizer.acceptSamples(samples)
+        override fun isReady(): Boolean = recognizer.isReady()
+        override fun decode() = recognizer.decode()
+        override fun isEndpoint(): Boolean = recognizer.isEndpoint()
+        override fun inputFinished() = recognizer.inputFinished()
+        override fun reset() = recognizer.reset(false)
+        override fun release() = recognizer.release()
+    }
+
+    private class OnnxEngine(private val recognizer: OnlineRecognizer) : LocalStreamingEngine {
+        private var stream: OnlineStream = recognizer.createStream("")
+
+        override val text: String
+            get() = recognizer.getResult(stream).text
+        override fun acceptSamples(samples: FloatArray) = stream.acceptWaveform(samples, SAMPLE_RATE)
+        override fun isReady(): Boolean = recognizer.isReady(stream)
+        override fun decode() = recognizer.decode(stream)
+        override fun isEndpoint(): Boolean = recognizer.isEndpoint(stream)
+        override fun inputFinished() = stream.inputFinished()
+
+        // sherpa-onnx 的流在 inputFinished 之后不能继续接收音频，所以每一轮都换新流
+        override fun reset() {
+            stream.release()
+            stream = recognizer.createStream("")
+        }
+
+        override fun release() {
+            stream.release()
+            recognizer.release()
+        }
+    }
+
+    private val engines = mutableMapOf<LocalSttModel, LocalStreamingEngine>()
+    private var recognizer: LocalStreamingEngine? = null
     private var vad: OnnxSileroVad? = null
     private var audioRecord: AudioRecord? = null
     private var recordingJob: Job? = null
@@ -102,7 +166,7 @@ class SherpaSpeechProvider(private val context: Context) : SpeechService {
             AppLogger.d(TAG, "Initializing sherpa-ncnn...")
             try {
                 withContext(Dispatchers.IO) {
-                    createRecognizer()
+                    recognizer = obtainEngine(LocalSttModel.ZH_EN_ZIPFORMER)
                     if (recognizer != null) {
                         AppLogger.d(TAG, "sherpa-ncnn initialized successfully")
                         _isInitialized.value = true
@@ -126,10 +190,47 @@ class SherpaSpeechProvider(private val context: Context) : SpeechService {
         }
     }
 
-    private fun createRecognizer() {
+    private fun modelForLanguage(languageCode: String): LocalSttModel? {
+        return when (Locale.forLanguageTag(languageCode).language) {
+            "zh", "en" -> LocalSttModel.ZH_EN_ZIPFORMER
+            "ru" -> LocalSttModel.RU_TONE_CTC
+            else -> null
+        }
+    }
+
+    private fun obtainEngine(model: LocalSttModel): LocalStreamingEngine? {
+        engines[model]?.let { return it }
+        val created =
+            when (model) {
+                LocalSttModel.ZH_EN_ZIPFORMER -> createNcnnEngine()
+                LocalSttModel.RU_TONE_CTC -> createToneEngine()
+            }
+        if (created != null) {
+            engines[model] = created
+        }
+        return created
+    }
+
+    private fun createToneEngine(): LocalStreamingEngine {
+        val modelConfig =
+            OnlineModelConfig(
+                toneCtc = OnlineToneCtcModelConfig(model = "$RU_TONE_MODEL_ASSET_DIR/model.onnx"),
+                tokens = "$RU_TONE_MODEL_ASSET_DIR/tokens.txt",
+                numThreads = 4,
+            )
+        val recognizerConfig =
+            OnlineRecognizerConfig(
+                modelConfig = modelConfig,
+                enableEndpoint = true,
+                decodingMethod = "greedy_search",
+            )
+        return OnnxEngine(OnlineRecognizer(assetManager = context.assets, config = recognizerConfig))
+    }
+
+    private fun createNcnnEngine(): LocalStreamingEngine? {
         val localModelDir: File
         try {
-            val modelDirName = "sherpa-ncnn-streaming-zipformer-bilingual-zh-en-2023-02-13"
+            val modelDirName = ZH_EN_MODEL_DIR
             val assetModelDir = "models/$modelDirName"
             val targetDir = File(OperitPaths.sherpaNcnnModelsDir(context), modelDirName)
             localModelDir = AssetCopyUtils.copyAssetDirRecursive(
@@ -142,7 +243,7 @@ class SherpaSpeechProvider(private val context: Context) : SpeechService {
             _recognitionState.value = SpeechService.RecognitionState.ERROR
             _recognitionError.value =
                     SpeechService.RecognitionError(-1, "Failed to prepare model files.")
-            return
+            return null
         }
 
         val featConfig = getFeatureExtractorConfig(sampleRate = 16000.0f, featureDim = 80)
@@ -184,11 +285,12 @@ class SherpaSpeechProvider(private val context: Context) : SpeechService {
                         hotwordsScore = 1.5f
                 )
 
-        recognizer =
+        return NcnnEngine(
                 SherpaNcnn(
                         config = recognizerConfig,
                         assetManager = null // Force using newFromFile
                 )
+        )
     }
 
     /**
@@ -241,13 +343,36 @@ class SherpaSpeechProvider(private val context: Context) : SpeechService {
                 return@withLock false
             }
 
+            val model = modelForLanguage(languageCode)
+            if (model == null) {
+                _recognitionState.value = SpeechService.RecognitionState.ERROR
+                _recognitionError.value =
+                    SpeechService.RecognitionError(-5, "Unsupported local recognition language: $languageCode")
+                return@withLock false
+            }
+            val engine =
+                try {
+                    withContext(Dispatchers.IO) { obtainEngine(model) }
+                } catch (e: Exception) {
+                    AppLogger.e(TAG, "Failed to create local recognizer for $model", e)
+                    _recognitionState.value = SpeechService.RecognitionState.ERROR
+                    _recognitionError.value =
+                        SpeechService.RecognitionError(-1, e.message ?: "Failed to initialize recognizer")
+                    return@withLock false
+                }
+            if (engine == null) {
+                return@withLock false
+            }
+            recognizer = engine
+            AppLogger.d(TAG, "Local recognition language=$languageCode model=$model")
+
             // 防御性清理：避免上一次异常/竞态导致 AudioRecord 遗留
             clearAndReleaseAudioRecord()
 
             _recognitionState.value = SpeechService.RecognitionState.PREPARING
             // 清空上一轮的识别结果，避免新的订阅者立刻收到旧的 StateFlow 值
             _recognitionResult.value = SpeechService.RecognitionResult(text = "", isFinal = false, confidence = 0f)
-            recognizer?.reset(false) // 使用SherpaNcnn中的reset方法，参数为false不重新创建识别器
+            recognizer?.reset()
 
             val pendingPcm = SpeechPrerollStore.consumePending()
             if (pendingPcm != null && pendingPcm.isNotEmpty()) {
@@ -265,7 +390,7 @@ class SherpaSpeechProvider(private val context: Context) : SpeechService {
                 }
             }
 
-            val sampleRateInHz = 16000
+            val sampleRateInHz = SAMPLE_RATE
             val channelConfig = AudioFormat.CHANNEL_IN_MONO
             val audioFormat = AudioFormat.ENCODING_PCM_16BIT
             val minBufferSize = AudioRecord.getMinBufferSize(sampleRateInHz, channelConfig, audioFormat)
@@ -368,7 +493,7 @@ class SherpaSpeechProvider(private val context: Context) : SpeechService {
                                     }
 
                                     if (isEndpoint) {
-                                        recognizerInstance.reset(false)
+                                        recognizerInstance.reset()
                                         if (!continuousMode) {
                                             _recognitionState.value = SpeechService.RecognitionState.IDLE
                                             return@launch
@@ -413,7 +538,7 @@ class SherpaSpeechProvider(private val context: Context) : SpeechService {
                                                         SpeechService.RecognitionResult(text = finalText, isFinal = true)
                                                 }
 
-                                                recognizerInstance.reset(false)
+                                                recognizerInstance.reset()
                                                 vadInstance.reset()
                                                 vadSpeechActive = false
 
@@ -511,10 +636,13 @@ class SherpaSpeechProvider(private val context: Context) : SpeechService {
             } catch (_: Exception) {
             }
             withContext(Dispatchers.IO) {
-                try {
-                    recognizer?.release()
-                } catch (_: Exception) {
+                engines.values.forEach { engine ->
+                    try {
+                        engine.release()
+                    } catch (_: Exception) {
+                    }
                 }
+                engines.clear()
                 recognizer = null
                 try {
                     vad?.close()
@@ -531,7 +659,7 @@ class SherpaSpeechProvider(private val context: Context) : SpeechService {
 
     override suspend fun getSupportedLanguages(): List<String> =
             withContext(Dispatchers.IO) {
-                return@withContext listOf("zh", "en")
+                return@withContext listOf("zh", "en", "ru")
             }
 
     // This method is for non-streaming recognition, which we are not using with sherpa-ncnn's

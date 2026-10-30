@@ -4,6 +4,7 @@ import android.content.Intent
 import android.content.Context
 import android.content.Context.INPUT_METHOD_SERVICE
 import com.ai.assistance.operit.util.AppLogger
+import com.ai.assistance.operit.util.LocaleUtils
 import com.ai.assistance.operit.R
 import android.view.View
 import android.view.inputmethod.InputMethodManager
@@ -162,7 +163,7 @@ class SpeechInteractionManager(
                         delay(160)
                     }
                     ok = speechService.startRecognition(
-                        languageCode = "zh-CN",
+                        languageCode = LocaleUtils.getSpeechLanguageTag(context),
                         continuousMode = true,
                         partialResults = true
                     )

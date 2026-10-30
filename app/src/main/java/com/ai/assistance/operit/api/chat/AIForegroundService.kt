@@ -27,6 +27,7 @@ import android.view.View
 import android.view.WindowManager
 import android.graphics.PixelFormat
 import com.ai.assistance.operit.util.AppLogger
+import com.ai.assistance.operit.util.LocaleUtils
 import androidx.core.app.NotificationCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -1594,7 +1595,7 @@ class AIForegroundService : Service() {
             AppLogger.d(TAG, "唤醒识别器 initialize: ok=$initOk")
             wakeListeningMicActiveForRecordingDetection = true
             val startOk = provider.startRecognition(
-                languageCode = "zh-CN",
+                languageCode = LocaleUtils.getSpeechLanguageTag(this@AIForegroundService),
                 continuousMode = true,
                 partialResults = true,
                 audioSource = MediaRecorder.AudioSource.MIC,

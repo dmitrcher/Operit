@@ -1,5 +1,6 @@
 package com.ai.assistance.operit.ui.features.toolbox.screens.speechtotext
 
+import com.ai.assistance.operit.util.LocaleUtils
 import android.Manifest
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -116,7 +117,7 @@ fun SpeechToTextScreen(navController: NavController) {
 
     // 状态变量
     var recognizedText by remember { mutableStateOf("") }
-    var selectedLanguage by remember { mutableStateOf("zh-CN") }
+    var selectedLanguage by remember { mutableStateOf(LocaleUtils.getSpeechLanguageTag(context)) }
     var error by remember { mutableStateOf<String?>(null) }
     var availableLanguages by remember { mutableStateOf<List<String>>(emptyList()) }
     
