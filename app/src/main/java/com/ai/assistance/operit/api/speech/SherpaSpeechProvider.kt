@@ -13,6 +13,7 @@ import java.io.File
 import com.ai.assistance.operit.util.AssetCopyUtils
 import java.io.IOException
 import java.util.Locale
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -122,6 +123,9 @@ class SherpaSpeechProvider(private val context: Context) : SpeechService {
                         false
                     }
                 }
+            } catch (e: CancellationException) {
+                // 调用方（如离开组合的界面）取消了初始化，这不是识别引擎错误
+                throw e
             } catch (e: Exception) {
                 AppLogger.e(TAG, "Failed to initialize sherpa-ncnn", e)
                 _recognitionState.value = SpeechService.RecognitionState.ERROR

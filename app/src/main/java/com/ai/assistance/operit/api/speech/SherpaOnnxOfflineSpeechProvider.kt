@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.abs
 import kotlin.math.log10
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -143,12 +144,16 @@ class SherpaOnnxOfflineSpeechProvider(
             AppLogger.d(TAG, "Initializing sherpa-onnx offline model $model...")
             try {
                 withContext(Dispatchers.IO) {
-                    recognizer = createRecognizer()
+                    // 加载中途被取消时保留已创建的识别器，下次初始化直接复用
+                    if (recognizer == null) recognizer = createRecognizer()
                 }
                 AppLogger.d(TAG, "sherpa-onnx offline model $model initialized")
                 _isInitialized.value = true
                 _recognitionState.value = SpeechService.RecognitionState.IDLE
                 true
+            } catch (e: CancellationException) {
+                // 调用方（如离开组合的界面）取消了初始化，这不是识别引擎错误
+                throw e
             } catch (e: Exception) {
                 AppLogger.e(TAG, "Failed to initialize sherpa-onnx offline model $model", e)
                 _recognitionState.value = SpeechService.RecognitionState.ERROR

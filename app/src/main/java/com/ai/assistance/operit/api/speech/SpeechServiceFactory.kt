@@ -118,7 +118,8 @@ object SpeechServiceFactory {
     )
 
     private val localLock = Any()
-    private var localEntry: LocalEntry? = null
+    // 每种本地引擎各自一个共享实例：唤醒监听与语音识别工具可以同时使用不同的本地模型
+    private val localEntries = mutableMapOf<SpeechServiceType, LocalEntry>()
 
     private fun acquireLocalSpeechService(
         context: Context,
@@ -126,14 +127,7 @@ object SpeechServiceFactory {
     ): SpeechService {
         val appContext = context.applicationContext
         synchronized(localLock) {
-            val existing = localEntry
-            if (existing != null && existing.type != type) {
-                throw IllegalStateException(
-                    "Local SpeechService already active: ${existing.type}. " +
-                        "Cannot create another local SpeechService of type $type before releasing the previous one."
-                )
-            }
-
+            val existing = localEntries[type]
             val entry =
                 if (existing != null) {
                     existing.refCount += 1
@@ -152,7 +146,7 @@ object SpeechServiceFactory {
                             SpeechServiceType.DEEPGRAM_STT,
                             -> throw IllegalArgumentException("Not a local SpeechService type: $type")
                         }
-                    LocalEntry(type = type, service = service, refCount = 1).also { localEntry = it }
+                    LocalEntry(type = type, service = service, refCount = 1).also { localEntries[type] = it }
                 }
 
             return SpeechServiceLease(
@@ -165,17 +159,14 @@ object SpeechServiceFactory {
     private fun releaseLocalSpeechService(type: SpeechServiceType) {
         val toShutdown: SpeechService?
         synchronized(localLock) {
-            val entry = localEntry
-            if (entry == null || entry.type != type) {
-                return
-            }
+            val entry = localEntries[type] ?: return
 
             entry.refCount -= 1
             if (entry.refCount > 0) {
                 return
             }
 
-            localEntry = null
+            localEntries.remove(type)
             toShutdown = entry.service
         }
 
@@ -211,29 +202,11 @@ object SpeechServiceFactory {
             } catch (_: Exception) {
             }
 
-            val created =
-                try {
-                    createSpeechService(context)
-                } catch (e: IllegalStateException) {
-                    AppLogger.w(TAG, "Failed to create SpeechService for profile=$selectedProfileId, keeping previous instance", e)
-                    null
-                }
-
-            if (created != null) {
-                instance = created
-                currentProfileId = selectedProfileId
-            }
+            instance = createSpeechService(context)
+            currentProfileId = selectedProfileId
         }
 
-        val value = instance
-        if (value != null) return value
-
-        val fallbackEntry = synchronized(localLock) { localEntry }
-        if (fallbackEntry != null) {
-            return acquireLocalSpeechService(context, fallbackEntry.type)
-        }
-
-        return createSpeechService(context, SpeechServiceType.SHERPA_NCNN)
+        return instance!!
     }
 
     /** 重置单例实例 在需要更改语音识别服务类型或释放资源时调用 */

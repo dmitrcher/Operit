@@ -1,5 +1,7 @@
 package com.ai.assistance.operit.ui.features.toolbox.screens.speechtotext
 
+import kotlinx.coroutines.runBlocking
+import com.ai.assistance.operit.data.preferences.SpeechServiceProfilesPreferences
 import com.ai.assistance.operit.util.LocaleUtils
 import android.Manifest
 import android.content.ClipData
@@ -122,21 +124,17 @@ fun SpeechToTextScreen(navController: NavController) {
     var availableLanguages by remember { mutableStateOf<List<String>>(emptyList()) }
     
     // recognitionMode 是驱动服务实例创建的唯一状态源
-    var recognitionMode by remember { mutableStateOf(SpeechServiceFactory.SpeechServiceType.SHERPA_NCNN) }
-
-    var speechService by remember {
-        mutableStateOf(SpeechServiceFactory.createSpeechService(context, recognitionMode))
+    // 默认使用设置中当前 STT 配置的引擎
+    var recognitionMode by remember {
+        mutableStateOf(runBlocking { SpeechServiceProfilesPreferences(context).getCurrentSttProfile().serviceType })
     }
 
-    LaunchedEffect(recognitionMode) {
-        try {
-            speechService.shutdown()
-        } catch (_: Exception) {
-        }
-        speechService = SpeechServiceFactory.createSpeechService(context, recognitionMode)
+    // 每个引擎只创建一次；切换引擎或离开界面时释放上一个实例
+    val speechService = remember(recognitionMode) {
+        SpeechServiceFactory.createSpeechService(context, recognitionMode)
     }
 
-    DisposableEffect(Unit) {
+    DisposableEffect(speechService) {
         onDispose {
             try {
                 speechService.shutdown()
