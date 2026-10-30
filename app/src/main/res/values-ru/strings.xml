@@ -6233,6 +6233,8 @@
     <string name="openai_error_max_retries">Не удалось получить ответ ИИ, достигнут максимум повторов: %1$s</string>
     <string name="openai_error_response_failed">Не удалось получить ответ ИИ: %1$s</string>
     <string name="openai_error_connection_timeout">Тайм-аут или обрыв подключения, повторов: %1$d: %2$s</string>
+    <string name="openai_error_region_blocked">OpenAI отклонил запрос: сервис недоступен из страны или сети, через которую вы подключены. Включите VPN или укажите в настройках модели адрес доступного сервиса-посредника.</string>
+    <string name="openai_error_region_blocked_with_ip">OpenAI отклонил запрос: сервис недоступен из страны или сети, через которую вы подключены (IP %1$s). Включите VPN или укажите в настройках модели адрес доступного сервиса-посредника.</string>
     <string name="openai_error_response_empty">Ответ API пуст</string>
     <string name="openai_error_parse_response_failed">Не удалось разобрать ответ: %1$s</string>
     <string name="openai_connection_success">Подключение успешно!</string>

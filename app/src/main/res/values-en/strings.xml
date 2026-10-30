@@ -6838,6 +6838,8 @@
     <string name="openai_error_max_retries">Failed to get AI response, max retries reached: %1$s</string>
     <string name="openai_error_response_failed">Failed to get AI response: %1$s</string>
     <string name="openai_error_connection_timeout">Connection timeout or interrupted, retried %1$d times: %2$s</string>
+    <string name="openai_error_region_blocked">OpenAI rejected the request: it is not available from the country or network you are connecting from. Turn on a VPN or set an accessible proxy service address in the model configuration.</string>
+    <string name="openai_error_region_blocked_with_ip">OpenAI rejected the request: it is not available from the country or network you are connecting from (IP %1$s). Turn on a VPN or set an accessible proxy service address in the model configuration.</string>
     <string name="openai_error_response_empty">API response is empty</string>
     <string name="openai_error_parse_response_failed">Failed to parse response: %1$s</string>
     <string name="openai_connection_success">Connection successful!</string>

@@ -123,6 +123,27 @@ open class OpenAIProvider(
         cause: Throwable? = null
     ) : IOException(message, cause), HttpStatusCodeException
 
+    /** 服务端按国家/地区或网络封锁了请求；同一网络下重试不会成功 */
+    class RegionBlockedException(message: String) : IOException(message)
+
+    /**
+     * 识别 OpenAI 的地区封锁响应：Cloudflare 的 “Unable to load site” 页面，
+     * 或 API 返回的 unsupported_country_region_territory 错误。
+     */
+    private fun regionBlockedMessage(context: Context, statusCode: Int, errorBody: String): String? {
+        if (statusCode != 403) return null
+        val blocked =
+            errorBody.contains("unsupported_country_region_territory") ||
+                (errorBody.contains("Unable to load site") && errorBody.contains("status.openai.com"))
+        if (!blocked) return null
+        val ip = Regex("""\[IP:\s*([0-9a-fA-F.:]+)""").find(errorBody)?.groupValues?.get(1)
+        return if (ip != null) {
+            context.getString(R.string.openai_error_region_blocked_with_ip, ip)
+        } else {
+            context.getString(R.string.openai_error_region_blocked)
+        }
+    }
+
     // Token缓存管理器
     val tokenCacheManager = TokenCacheManager()
 
@@ -1651,6 +1672,11 @@ open class OpenAIProvider(
             throw exception
         }
         checkCancellation(context, exception)
+        if (exception is RegionBlockedException) {
+            // 地区封锁与网络出口有关，重试只会延迟报错
+            AppLogger.e("AIService", "【发送消息】${exception.message}", exception)
+            throw exception
+        }
 
         val errorText = resolveRetryErrorText(context, exception)
 
@@ -3315,6 +3341,9 @@ open class OpenAIProvider(
                                 "AIService",
                                 "【发送消息】API请求失败，状态码: ${response.code}，错误信息: $errorBody"
                             )
+                            regionBlockedMessage(context, response.code, errorBody)?.let { message ->
+                                throw RegionBlockedException(message)
+                            }
                             // 状态码错误保留状态码信息，随后进入统一重试循环。
                             if (response.code in 400..499) {
                                 throw HttpStatusException(
