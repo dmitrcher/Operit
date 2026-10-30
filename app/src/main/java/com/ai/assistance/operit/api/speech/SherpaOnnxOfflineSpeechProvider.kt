@@ -4,7 +4,9 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.media.AudioFormat
 import android.media.AudioRecord
+import com.ai.assistance.operit.R
 import com.ai.assistance.operit.util.AppLogger
+import java.io.File
 import com.k2fsa.sherpa.onnx.OfflineModelConfig
 import com.k2fsa.sherpa.onnx.OfflineRecognizer
 import com.k2fsa.sherpa.onnx.OfflineRecognizerConfig
@@ -32,6 +34,7 @@ import kotlinx.coroutines.withContext
 
 /**
  * 基于 sherpa-onnx 非流式（offline）NeMo transducer 模型的本地语音识别。
+ * 模型文件由 [SttModelDownloadManager] 下载到应用内部存储。
  *
  * 用 Silero VAD 把麦克风音频切成短语：短语结束后整段解码得到最终结果；说话过程中每隔
  * [PARTIAL_INTERVAL_SAMPLES] 对已收到的音频重新解码一次作为中间结果。
@@ -39,45 +42,8 @@ import kotlinx.coroutines.withContext
 @SuppressLint("MissingPermission")
 class SherpaOnnxOfflineSpeechProvider(
     private val context: Context,
-    private val model: Model,
+    private val model: SherpaOnnxSttModel,
 ) : SpeechService {
-
-    /** 打包在 assets 中的 sherpa-onnx NeMo transducer 模型 */
-    enum class Model(
-        val assetDir: String,
-        val encoder: String,
-        val decoder: String,
-        val joiner: String,
-        val languages: List<String>,
-    ) {
-        /** NVIDIA Parakeet TDT 0.6B v3：25 种欧洲语言，自动识别语种，带标点和大小写 */
-        PARAKEET_V3(
-            assetDir = "models/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8",
-            encoder = "encoder.int8.onnx",
-            decoder = "decoder.int8.onnx",
-            joiner = "joiner.int8.onnx",
-            languages = listOf(
-                "ru", "en", "bg", "cs", "da", "de", "el", "es", "et", "fi", "fr", "hr", "hu",
-                "it", "lt", "lv", "mt", "nl", "pl", "pt", "ro", "sk", "sl", "sv", "uk",
-            ),
-        ),
-        /** NVIDIA FastConformer 多语言：10 种语言，带标点和大小写 */
-        FASTCONFORMER(
-            assetDir = "models/sherpa-onnx-nemo-fast-conformer-transducer-be-de-en-es-fr-hr-it-pl-ru-uk-20k-int8",
-            encoder = "encoder.int8.onnx",
-            decoder = "decoder.int8.onnx",
-            joiner = "joiner.int8.onnx",
-            languages = listOf("ru", "en", "be", "de", "es", "fr", "hr", "it", "pl", "uk"),
-        ),
-        /** Sber GigaAM v3：俄语，带标点 */
-        GIGAAM_V3(
-            assetDir = "models/sherpa-onnx-nemo-transducer-punct-giga-am-v3-russian-2025-12-16",
-            encoder = "encoder.int8.onnx",
-            decoder = "decoder.onnx",
-            joiner = "joiner.onnx",
-            languages = listOf("ru"),
-        ),
-    }
 
     companion object {
         private const val TAG = "SherpaOnnxOfflineStt"
@@ -165,23 +131,27 @@ class SherpaOnnxOfflineSpeechProvider(
     }
 
     private fun createRecognizer(): OfflineRecognizer {
+        if (!SttModelDownloadManager.isReady(context, model)) {
+            throw IllegalStateException(context.getString(R.string.stt_model_not_downloaded_error, model.displayName))
+        }
+        val dir = SttModelDownloadManager.modelDir(context, model)
         val config =
             OfflineRecognizerConfig(
                 modelConfig =
                     OfflineModelConfig(
                         transducer =
                             OfflineTransducerModelConfig(
-                                encoder = "${model.assetDir}/${model.encoder}",
-                                decoder = "${model.assetDir}/${model.decoder}",
-                                joiner = "${model.assetDir}/${model.joiner}",
+                                encoder = File(dir, model.encoder).absolutePath,
+                                decoder = File(dir, model.decoder).absolutePath,
+                                joiner = File(dir, model.joiner).absolutePath,
                             ),
-                        tokens = "${model.assetDir}/tokens.txt",
+                        tokens = File(dir, "tokens.txt").absolutePath,
                         modelType = "nemo_transducer",
                         numThreads = 4,
                     ),
                 decodingMethod = "greedy_search",
             )
-        return OfflineRecognizer(assetManager = context.assets, config = config)
+        return OfflineRecognizer(assetManager = null, config = config)
     }
 
     private fun decode(samples: FloatArray): String {
@@ -456,11 +426,15 @@ class SherpaOnnxOfflineSpeechProvider(
             AppLogger.d(TAG, "Stopping recognition...")
             _recognitionState.value = SpeechService.RecognitionState.PROCESSING
             // 停止时把尚未结束的短语也交给解码，然后等待解码队列清空
-            finishSegment()
+            val submitted = finishSegment()
             job.cancel()
             try {
                 job.join()
             } catch (_: Exception) {
+            }
+            if (!submitted) {
+                // 最后一段已在录音中结束：仍发出最终结果，调用方据此结束处理而不必等待超时
+                _recognitionResult.value = SpeechService.RecognitionResult(text = "", isFinal = true)
             }
             recordingJob = null
             decodeJob = null

@@ -2533,6 +2533,15 @@
     <string name="speech_services_stt_type_parakeet">Локально: Parakeet v3 (русский, английский и ещё 23)</string>
     <string name="speech_services_stt_type_fastconformer">Локально: FastConformer (русский, английский и ещё 8)</string>
     <string name="speech_services_stt_type_gigaam">Локально: GigaAM v3 (русский)</string>
+    <string name="stt_model_files_title">Файлы модели: %1$s</string>
+    <string name="stt_model_status_not_downloaded">Не скачана (%1$s). Модель хранится в памяти приложения и сохраняется при обновлениях.</string>
+    <string name="stt_model_status_downloading">Скачивание: %1$s из %2$s</string>
+    <string name="stt_model_status_ready">Скачана (%1$s)</string>
+    <string name="stt_model_status_failed">Ошибка скачивания: %1$s</string>
+    <string name="stt_model_download">Скачать</string>
+    <string name="stt_model_cancel">Отменить</string>
+    <string name="stt_model_delete">Удалить</string>
+    <string name="stt_model_not_downloaded_error">Модель %1$s не скачана. Скачайте её в настройках речевых сервисов на вкладке «Распознавание речи».</string>
     <string name="speech_services_tts_cleaner_title">Список регулярных выражений очистки TTS</string>
     <string name="speech_services_tts_cleaner_desc">Удалять совпавший текст по этим регулярным выражениям перед озвучиванием.</string>
     <string name="speech_services_tts_cleaner_placeholder">e.g.: \\[.*?\\]</string>

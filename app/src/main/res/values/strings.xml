@@ -2833,6 +2833,15 @@
     <string name="speech_services_stt_type_parakeet">本地：Parakeet v3（俄语、英语等 25 种语言）</string>
     <string name="speech_services_stt_type_fastconformer">本地：FastConformer（俄语、英语等 10 种语言）</string>
     <string name="speech_services_stt_type_gigaam">本地：GigaAM v3（俄语）</string>
+    <string name="stt_model_files_title">模型文件：%1$s</string>
+    <string name="stt_model_status_not_downloaded">尚未下载（%1$s）。模型保存在应用内部存储中，更新应用后保留。</string>
+    <string name="stt_model_status_downloading">正在下载：%1$s / %2$s</string>
+    <string name="stt_model_status_ready">已下载（%1$s）</string>
+    <string name="stt_model_status_failed">下载失败：%1$s</string>
+    <string name="stt_model_download">下载</string>
+    <string name="stt_model_cancel">取消</string>
+    <string name="stt_model_delete">删除</string>
+    <string name="stt_model_not_downloaded_error">模型 %1$s 尚未下载，请在语音服务设置的语音识别页中下载。</string>
     
     <!-- TTS Cleaner Regex -->
     <string name="speech_services_tts_cleaner_title">TTS 清理正则列表</string>

@@ -1,5 +1,10 @@
 package com.ai.assistance.operit.ui.features.settings.screens
 
+import com.ai.assistance.operit.api.speech.SttModelDownloadManager
+import com.ai.assistance.operit.api.speech.SherpaOnnxSttModel
+import android.text.format.Formatter
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Button
 import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
@@ -2156,6 +2161,10 @@ fun SpeechServicesSettingsScreen(
                             }
                         }
 
+                        SpeechServiceFactory.onnxModelFor(sttServiceTypeInput)?.let { model ->
+                            LocalSttModelCard(model = model, modifier = Modifier.padding(top = 16.dp))
+                        }
+
                         AnimatedVisibility(visible = sttServiceTypeInput == SpeechServiceFactory.SpeechServiceType.OPENAI_STT) {
                             Column(modifier = Modifier.padding(top = 16.dp)) {
                                 Text(
@@ -2737,3 +2746,67 @@ private fun sttServiceTypeLabel(type: SpeechServiceFactory.SpeechServiceType): S
         SpeechServiceFactory.SpeechServiceType.SHERPA_ONNX_FASTCONFORMER -> stringResource(R.string.speech_services_stt_type_fastconformer)
         SpeechServiceFactory.SpeechServiceType.SHERPA_ONNX_GIGAAM_V3 -> stringResource(R.string.speech_services_stt_type_gigaam)
     }
+
+/** 需要下载的本地 STT 模型：显示下载状态并提供下载、取消、删除操作 */
+@Composable
+private fun LocalSttModelCard(model: SherpaOnnxSttModel, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    LaunchedEffect(model) { SttModelDownloadManager.refresh(context) }
+    val states by SttModelDownloadManager.states.collectAsState()
+    val state = states[model] ?: SttModelDownloadManager.State.NotDownloaded
+    val totalSize = Formatter.formatShortFileSize(context, model.downloadBytes)
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = stringResource(R.string.stt_model_files_title, model.displayName),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Medium
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        when (state) {
+            SttModelDownloadManager.State.NotDownloaded -> {
+                Text(stringResource(R.string.stt_model_status_not_downloaded, totalSize), style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = { SttModelDownloadManager.download(context, model) }) {
+                    Text(stringResource(R.string.stt_model_download))
+                }
+            }
+            is SttModelDownloadManager.State.Downloading -> {
+                val fraction =
+                    if (state.totalBytes > 0) (state.downloadedBytes.toFloat() / state.totalBytes).coerceIn(0f, 1f) else 0f
+                LinearProgressIndicator(progress = { fraction }, modifier = Modifier.fillMaxWidth())
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    stringResource(
+                        R.string.stt_model_status_downloading,
+                        Formatter.formatShortFileSize(context, state.downloadedBytes),
+                        totalSize
+                    ),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedButton(onClick = { SttModelDownloadManager.cancel(model) }) {
+                    Text(stringResource(R.string.stt_model_cancel))
+                }
+            }
+            SttModelDownloadManager.State.Ready -> {
+                Text(stringResource(R.string.stt_model_status_ready, totalSize), style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedButton(onClick = { SttModelDownloadManager.delete(context, model) }) {
+                    Text(stringResource(R.string.stt_model_delete))
+                }
+            }
+            is SttModelDownloadManager.State.Failed -> {
+                Text(
+                    stringResource(R.string.stt_model_status_failed, state.message),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = { SttModelDownloadManager.download(context, model) }) {
+                    Text(stringResource(R.string.stt_model_download))
+                }
+            }
+        }
+    }
+}

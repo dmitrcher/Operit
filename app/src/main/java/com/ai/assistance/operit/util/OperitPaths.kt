@@ -18,6 +18,7 @@ object OperitPaths {
     private const val USERSCRIPTS_DIR_NAME = "userscripts"
 
     const val SHERPA_NCNN_MODELS_DIR_NAME = ".sherpa_ncnn_models"
+    const val STT_ONNX_MODELS_DIR_NAME = ".stt_onnx_models"
     const val VECTOR_INDEX_DIR_NAME = ".vector_index"
 
     const val IMAGE_POOL_DIR_NAME = "image_pool"
@@ -92,6 +93,11 @@ object OperitPaths {
         return ensureDir(File(context.filesDir, SHERPA_NCNN_MODELS_DIR_NAME))
     }
 
+    /** 运行时下载的 sherpa-onnx STT 模型，应用更新后保留 */
+    fun sttOnnxModelsDir(context: Context): File {
+        return ensureDir(File(context.filesDir, STT_ONNX_MODELS_DIR_NAME))
+    }
+
     fun vectorIndexDir(context: Context): File {
         return ensureDir(File(context.filesDir, VECTOR_INDEX_DIR_NAME))
     }
@@ -111,6 +117,7 @@ object OperitPaths {
     fun rawSnapshotExcludedFilesTopLevelDirNames(): Set<String> {
         return setOf(
             SHERPA_NCNN_MODELS_DIR_NAME,
+            STT_ONNX_MODELS_DIR_NAME,
             VECTOR_INDEX_DIR_NAME,
             IMAGE_POOL_DIR_NAME,
             MEDIA_POOL_DIR_NAME,

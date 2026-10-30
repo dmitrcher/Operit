@@ -344,77 +344,21 @@ val syncSttModelAssets by tasks.registering {
     }
 }
 
-// STT models that are only published as sherpa-onnx release archives (no per-file mirror).
-// The archive is verified by SHA-256, then the listed files are extracted into models/<modelDir>/.
-val sttModelArchiveAssets =
-    listOf(
-        SttModelAsset(
-            targetPath = "sherpa-onnx-nemo-fast-conformer-transducer-be-de-en-es-fr-hr-it-pl-ru-uk-20k-int8.tar.bz2",
-            sourceUrl = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-nemo-fast-conformer-transducer-be-de-en-es-fr-hr-it-pl-ru-uk-20k-int8.tar.bz2",
-            expectedBytes = 106546673,
-            expectedSha256 = "06072bad277f0f4c29cc866d7c62b0e47936da39afafeae453faa925025ccad6",
-        ),
-    )
-val sttModelArchiveFiles = setOf("encoder.int8.onnx", "decoder.int8.onnx", "joiner.int8.onnx", "tokens.txt")
-val downloadedSttModelArchivesDir = layout.buildDirectory.dir("stt-model-archives")
-val generatedSttModelArchiveAssetsDir = layout.buildDirectory.dir("generated/stt-model-archive-assets")
-
-val syncSttModelArchiveAssets by tasks.registering {
-    description = "Downloads, verifies and extracts archived assets for local STT recognition."
-    group = "build setup"
-    outputs.dir(generatedSttModelArchiveAssetsDir)
-    outputs.upToDateWhen { false }
-
-    doLast {
-        val outputRoot = generatedSttModelArchiveAssetsDir.get().asFile
-        outputRoot.deleteRecursively()
-        sttModelArchiveAssets.forEach { asset ->
-            val archive = downloadedSttModelArchivesDir.get().file(asset.targetPath).asFile
-            if (!verifySttModelAsset(archive, asset)) {
-                if (archive.exists() && !archive.delete()) {
-                    error("Unable to replace invalid STT model archive: ${archive.path}")
-                }
-                downloadSttModelAsset(asset, archive)
-            }
-            val modelDir = asset.targetPath.removeSuffix(".tar.bz2")
-            project.copy {
-                from(project.tarTree(project.resources.bzip2(archive)))
-                include("**/$modelDir/*")
-                eachFile {
-                    if (name in sttModelArchiveFiles) {
-                        path = "models/$modelDir/$name"
-                    } else {
-                        exclude()
-                    }
-                }
-                includeEmptyDirs = false
-                into(outputRoot)
-            }
-            sttModelArchiveFiles.forEach { fileName ->
-                val extracted = File(outputRoot, "models/$modelDir/$fileName")
-                require(extracted.isFile && extracted.length() > 0L) {
-                    "STT model archive ${asset.targetPath} is missing $fileName"
-                }
-            }
-        }
-    }
-}
-
 val syncMainAssets by tasks.registering(Sync::class) {
     description = "Assembles application assets with verified generated STT model files."
     group = "build setup"
-    dependsOn(syncSttModelAssets, syncSttModelArchiveAssets)
+    dependsOn(syncSttModelAssets)
 
     from("src/main/assets") {
         exclude("models/**")
     }
     from(generatedSttModelAssetsDir)
-    from(generatedSttModelArchiveAssetsDir)
     into(generatedMainAssetsDir)
 }
 
-// sherpa-onnx runtime for the Russian streaming T-one STT model. This AAR links onnxruntime
-// statically into libsherpa-onnx-jni.so, so it does not clash with onnxruntime-android below.
+// sherpa-onnx runtime for the downloadable local STT models (Parakeet, FastConformer, GigaAM).
+// This AAR links onnxruntime statically into libsherpa-onnx-jni.so, so it does not clash with
+// onnxruntime-android below.
 val sherpaOnnxAarAsset =
     SttModelAsset(
         targetPath = "sherpa-onnx-static-link-onnxruntime-2.0.1.aar",
@@ -426,7 +370,7 @@ val generatedSherpaOnnxDir = layout.buildDirectory.dir("generated/sherpa-onnx")
 val sherpaOnnxAarFile = generatedSherpaOnnxDir.map { dir -> dir.file(sherpaOnnxAarAsset.targetPath) }
 
 val syncSherpaOnnxAar by tasks.registering {
-    description = "Downloads and verifies the sherpa-onnx Android AAR used by local Russian STT."
+    description = "Downloads and verifies the sherpa-onnx Android AAR used by downloadable local STT models."
     group = "build setup"
     outputs.dir(generatedSherpaOnnxDir)
 
@@ -605,10 +549,6 @@ android {
             // Fix for any other potential duplicate files
             pickFirsts += "**/*.so"
         }
-    }
-    // sherpa-onnx 通过 AssetManager 读取 STT 模型；不压缩时可直接映射，避免每次加载解压数百 MB
-    androidResources {
-        noCompress += "onnx"
     }
 //    aaptOptions {
 //        noCompress += "tflite"

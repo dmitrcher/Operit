@@ -136,12 +136,10 @@ object SpeechServiceFactory {
                     val service =
                         when (type) {
                             SpeechServiceType.SHERPA_NCNN -> SherpaSpeechProvider(appContext)
-                            SpeechServiceType.SHERPA_ONNX_PARAKEET_V3 ->
-                                SherpaOnnxOfflineSpeechProvider(appContext, SherpaOnnxOfflineSpeechProvider.Model.PARAKEET_V3)
-                            SpeechServiceType.SHERPA_ONNX_FASTCONFORMER ->
-                                SherpaOnnxOfflineSpeechProvider(appContext, SherpaOnnxOfflineSpeechProvider.Model.FASTCONFORMER)
-                            SpeechServiceType.SHERPA_ONNX_GIGAAM_V3 ->
-                                SherpaOnnxOfflineSpeechProvider(appContext, SherpaOnnxOfflineSpeechProvider.Model.GIGAAM_V3)
+                            SpeechServiceType.SHERPA_ONNX_PARAKEET_V3,
+                            SpeechServiceType.SHERPA_ONNX_FASTCONFORMER,
+                            SpeechServiceType.SHERPA_ONNX_GIGAAM_V3,
+                            -> SherpaOnnxOfflineSpeechProvider(appContext, onnxModelFor(type)!!)
                             SpeechServiceType.OPENAI_STT,
                             SpeechServiceType.DEEPGRAM_STT,
                             -> throw IllegalArgumentException("Not a local SpeechService type: $type")
@@ -155,6 +153,18 @@ object SpeechServiceFactory {
             )
         }
     }
+
+    /** 需要下载模型文件的本地引擎对应的模型；其他引擎返回 null */
+    fun onnxModelFor(type: SpeechServiceType): SherpaOnnxSttModel? =
+        when (type) {
+            SpeechServiceType.SHERPA_ONNX_PARAKEET_V3 -> SherpaOnnxSttModel.PARAKEET_V3
+            SpeechServiceType.SHERPA_ONNX_FASTCONFORMER -> SherpaOnnxSttModel.FASTCONFORMER
+            SpeechServiceType.SHERPA_ONNX_GIGAAM_V3 -> SherpaOnnxSttModel.GIGAAM_V3
+            SpeechServiceType.SHERPA_NCNN,
+            SpeechServiceType.OPENAI_STT,
+            SpeechServiceType.DEEPGRAM_STT,
+            -> null
+        }
 
     private fun releaseLocalSpeechService(type: SpeechServiceType) {
         val toShutdown: SpeechService?

@@ -216,11 +216,15 @@ class SpeechInteractionManager(
         val effectiveText = stripWakePhrasePrefixIfNeeded(resultText)
         if (isRecording) {
             if (effectiveText.isNotBlank()) {
-                // 处理增量
-                if (latestPartialText.isNotEmpty() && !effectiveText.startsWith(latestPartialText)) {
-                    accumulatedText += (if (accumulatedText.isNotEmpty()) "。" else "") + latestPartialText
+                // 最终结果固定为一个短语；中间结果只替换当前短语。
+                // 非流式引擎重新解码时会修改已识别的词和标点，不能按“前缀是否延续”判断短语边界，
+                // 否则同一句话会被重复拼接。
+                if (isFinal) {
+                    accumulatedText = joinRecognizedSegments(accumulatedText, effectiveText)
+                    latestPartialText = ""
+                } else {
+                    latestPartialText = effectiveText
                 }
-                latestPartialText = effectiveText
 
                 // 静默检测
                 if (autoSendSilence) {
@@ -232,13 +236,32 @@ class SpeechInteractionManager(
                     }
                 }
             }
-            userMessage = accumulatedText + (if (accumulatedText.isNotEmpty() || latestPartialText.isNotEmpty()) latestPartialText else "")
+            userMessage = joinRecognizedSegments(accumulatedText, latestPartialText)
             
         } else if (isProcessingSpeech && isFinal) {
             timeoutJob?.cancel()
-            accumulatedText += (if (accumulatedText.isNotEmpty() && effectiveText.isNotBlank()) "。" else "") + effectiveText
+            // 停止后的最终结果覆盖最后一段的中间结果；没有新文本时保留已显示的中间结果
+            accumulatedText = joinRecognizedSegments(accumulatedText, effectiveText.ifBlank { latestPartialText })
+            latestPartialText = ""
+            userMessage = accumulatedText
             finalizeSpeechInput()
         }
+    }
+
+    /** 拼接两个识别短语：中日文用“。”，其他语言用空格（前一段没有句末标点时补“. ”） */
+    private fun joinRecognizedSegments(head: String, tail: String): String {
+        if (tail.isBlank()) return head
+        if (head.isBlank()) return tail
+        val cjk = Regex("[\\u3040-\\u30ff\\u3400-\\u9fff]")
+        val last = head.last()
+        val separator =
+            when {
+                cjk.containsMatchIn(last.toString()) || cjk.containsMatchIn(tail.first().toString()) ->
+                    if (last in "。！？，") "" else "。"
+                last in ".!?…,;:" -> " "
+                else -> ". "
+            }
+        return head + separator + tail
     }
 
     private fun stripWakePhrasePrefixIfNeeded(text: String): String {
