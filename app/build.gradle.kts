@@ -516,6 +516,8 @@ android {
         
         jniLibs {
             useLegacyPackaging = true
+            // sherpa-onnx AAR 与 onnxruntime-android 都带 x86 的 libonnxruntime.so；应用只打包 arm64-v8a
+            excludes += "lib/x86/libonnxruntime.so"
         }
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
