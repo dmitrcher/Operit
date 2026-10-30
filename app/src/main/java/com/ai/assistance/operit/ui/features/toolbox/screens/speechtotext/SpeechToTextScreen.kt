@@ -119,6 +119,8 @@ fun SpeechToTextScreen(navController: NavController) {
 
     // 状态变量
     var recognizedText by remember { mutableStateOf("") }
+    // 本次识别中已确定的短语；连续模式下每个最终结果对应一个短语
+    var committedText by remember { mutableStateOf("") }
     var selectedLanguage by remember { mutableStateOf(LocaleUtils.getSpeechLanguageTag(context)) }
     var error by remember { mutableStateOf<String?>(null) }
     var availableLanguages by remember { mutableStateOf<List<String>>(emptyList()) }
@@ -164,7 +166,15 @@ fun SpeechToTextScreen(navController: NavController) {
     LaunchedEffect(speechService) {
         launch {
             speechService.recognitionResultFlow.collect { result ->
-                recognizedText = result.text
+                // 最终结果追加为新短语，中间结果只显示当前短语；空的最终结果（如停止时没有剩余音频）不清空已识别文本
+                if (result.isFinal) {
+                    if (result.text.isNotBlank()) {
+                        committedText = listOf(committedText, result.text).filter { it.isNotBlank() }.joinToString(" ")
+                    }
+                    recognizedText = committedText
+                } else if (result.text.isNotBlank()) {
+                    recognizedText = listOf(committedText, result.text).filter { it.isNotBlank() }.joinToString(" ")
+                }
             }
         }
         launch {
@@ -179,6 +189,8 @@ fun SpeechToTextScreen(navController: NavController) {
     // 开始语音识别
     fun startRecognition() {
         error = null
+        committedText = ""
+        recognizedText = ""
         coroutineScope.launch {
             try {
                 // 对于本地引擎，启用连续模式和部分结果
