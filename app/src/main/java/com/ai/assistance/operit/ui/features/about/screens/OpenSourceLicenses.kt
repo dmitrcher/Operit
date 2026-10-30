@@ -134,6 +134,8 @@ private fun getOpenSourceLibraries(): List<OpenSourceLibrary> {
         OpenSourceLibrary("sherpa-onnx", "Speech recognition with ONNX Runtime", "Apache-2.0", "https://github.com/k2-fsa/sherpa-onnx"),
         OpenSourceLibrary("Parakeet TDT 0.6B v3", "NVIDIA multilingual speech recognition model", "CC-BY-4.0", "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"),
         OpenSourceLibrary("FastConformer multilingual", "NVIDIA speech recognition model for 10 languages", "CC-BY-4.0", "https://catalog.ngc.nvidia.com/orgs/nvidia/teams/nemo/models/stt_multilingual_fastconformer_hybrid_large_pc"),
+        OpenSourceLibrary("Piper", "Fast local neural text to speech (voices by rhasspy/piper)", "MIT", "https://github.com/rhasspy/piper"),
+        OpenSourceLibrary("eSpeak NG", "Phonemizer used by Piper voices", "GPL-3.0", "https://github.com/espeak-ng/espeak-ng"),
         OpenSourceLibrary("GigaAM v3", "Russian speech recognition model by Sber", "MIT", "https://github.com/salute-developers/GigaAM"),
         OpenSourceLibrary("SLF4J", "Simple Logging Facade for Java", "MIT", "https://www.slf4j.org/")
     ).sortedBy { it.name }

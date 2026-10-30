@@ -19,6 +19,7 @@ object OperitPaths {
 
     const val SHERPA_NCNN_MODELS_DIR_NAME = ".sherpa_ncnn_models"
     const val STT_ONNX_MODELS_DIR_NAME = ".stt_onnx_models"
+    const val PIPER_VOICES_DIR_NAME = ".tts_piper_voices"
     const val VECTOR_INDEX_DIR_NAME = ".vector_index"
 
     const val IMAGE_POOL_DIR_NAME = "image_pool"
@@ -98,6 +99,11 @@ object OperitPaths {
         return ensureDir(File(context.filesDir, STT_ONNX_MODELS_DIR_NAME))
     }
 
+    /** 运行时下载的 Piper TTS 音色，应用更新后保留 */
+    fun piperVoicesDir(context: Context): File {
+        return ensureDir(File(context.filesDir, PIPER_VOICES_DIR_NAME))
+    }
+
     fun vectorIndexDir(context: Context): File {
         return ensureDir(File(context.filesDir, VECTOR_INDEX_DIR_NAME))
     }
@@ -118,6 +124,7 @@ object OperitPaths {
         return setOf(
             SHERPA_NCNN_MODELS_DIR_NAME,
             STT_ONNX_MODELS_DIR_NAME,
+            PIPER_VOICES_DIR_NAME,
             VECTOR_INDEX_DIR_NAME,
             IMAGE_POOL_DIR_NAME,
             MEDIA_POOL_DIR_NAME,

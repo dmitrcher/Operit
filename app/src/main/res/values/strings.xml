@@ -2824,6 +2824,16 @@
     <string name="speech_services_tts_type_openai_ws">OpenAI Realtime (WebSocket)</string>
     <string name="speech_services_tts_type_openai">OpenAI 语音 (HTTP)</string>
     <string name="speech_services_tts_type_vits">VITS/Piper TTS (本地)</string>
+    <string name="speech_services_tts_type_piper">Piper TTS（本地，俄语 + 英语）</string>
+    <string name="piper_tts_voices_title">Piper 音色</string>
+    <string name="piper_tts_voices_hint">西里尔字母文本由俄语音色朗读，拉丁字母文本由英语音色朗读。不选择英语音色时，全部文本由俄语音色朗读。音色保存在应用内部存储中，更新应用后保留。</string>
+    <string name="piper_tts_ru_voice">俄语音色</string>
+    <string name="piper_tts_en_voice">英语音色</string>
+    <string name="piper_tts_en_voice_none">不使用</string>
+    <string name="piper_tts_error_voice_not_set">未选择 Piper 俄语音色</string>
+    <string name="piper_tts_error_voice_not_downloaded">Piper 音色 %1$s 尚未下载，请在语音服务设置中下载。</string>
+    <string name="piper_tts_error_init_failed">Piper TTS 初始化失败</string>
+    <string name="piper_tts_error_sample_rate_mismatch">所选 Piper 音色的采样率不同，无法拼接</string>
     
     <!-- STT Service Types -->
     <string name="speech_services_stt_type_sherpa">Sherpa NCNN (本地)</string>

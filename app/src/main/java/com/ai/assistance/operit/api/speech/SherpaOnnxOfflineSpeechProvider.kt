@@ -34,7 +34,7 @@ import kotlinx.coroutines.withContext
 
 /**
  * 基于 sherpa-onnx 非流式（offline）NeMo transducer 模型的本地语音识别。
- * 模型文件由 [SttModelDownloadManager] 下载到应用内部存储。
+ * 模型文件由 [LocalModelDownloadManager] 下载到应用内部存储。
  *
  * 用 Silero VAD 把麦克风音频切成短语：短语结束后整段解码得到最终结果；说话过程中每隔
  * [PARTIAL_INTERVAL_SAMPLES] 对已收到的音频重新解码一次作为中间结果。
@@ -131,10 +131,10 @@ class SherpaOnnxOfflineSpeechProvider(
     }
 
     private fun createRecognizer(): OfflineRecognizer {
-        if (!SttModelDownloadManager.isReady(context, model)) {
+        if (!LocalModelDownloadManager.isReady(context, model)) {
             throw IllegalStateException(context.getString(R.string.stt_model_not_downloaded_error, model.displayName))
         }
-        val dir = SttModelDownloadManager.modelDir(context, model)
+        val dir = model.dir(context)
         val config =
             OfflineRecognizerConfig(
                 modelConfig =

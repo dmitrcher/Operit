@@ -2,7 +2,7 @@
 fork: https://github.com/dmitrcher/Operit
 ---
 
-# 本地俄语 / 多语言语音识别
+# 本地俄语 / 多语言语音识别与 Piper 语音合成
 
 ## 原状况
 
@@ -20,7 +20,11 @@ fork: https://github.com/dmitrcher/Operit
 - 三个模型不打包进 APK：`SherpaOnnxSttModel` 记录来源、大小和 SHA-256，`SttModelDownloadManager` 在运行时下载到
   `files/.stt_onnx_models`（应用更新后保留，不进入数据快照），支持断点续传；FastConformer 只有 release 压缩包，下载校验后解压。
 - 语音服务设置的 STT 页在选择这些引擎时显示模型卡片：下载 / 取消 / 删除与进度。
-- `syncSherpaOnnxAar` 下载并校验 `sherpa-onnx-static-link-onnxruntime-2.0.1.aar`；onnxruntime 静态链接，不与 `onnxruntime-android` 冲突。
+- `syncSherpaOnnxAar` 下载并校验 `sherpa-onnx-static-link-onnxruntime-1.13.8.aar`；onnxruntime 静态链接，不与 `onnxruntime-android` 冲突。
+  固定在 1.13.x：sherpa-onnx 2.0 移除了 Piper 音色所需的 espeak-ng。
+- 新增 TTS 引擎 `PIPER_TTS`（`PiperVoiceProvider`）：sherpa-onnx Piper 音色运行时下载到 `files/.tts_piper_voices`。
+  `voiceId` 为俄语音色、`modelName` 为英语音色；文本按西里尔 / 拉丁字母切分后分别合成并拼接，未选英语音色时全部用俄语音色。
+- 下载器通用化为 `LocalModelDownloadManager` + `DownloadableModel`，同时服务 STT 模型和 TTS 音色，tar.bz2 可整包解压。
 - VAD：静音 800ms 才结束短语，并保留语音起点前 ~320ms 音频；`SherpaSpeechProvider` 同样修正。
 - `LocaleUtils.getSpeechLanguageTag` 让悬浮窗语音、唤醒监听、语音识别工具默认跟随应用语言。
 - OpenAI / Deepgram STT 的语言映射与支持列表加入 `ru`。

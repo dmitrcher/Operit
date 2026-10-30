@@ -1,7 +1,8 @@
 package com.ai.assistance.operit.ui.features.settings.screens
 
-import com.ai.assistance.operit.api.speech.SttModelDownloadManager
-import com.ai.assistance.operit.api.speech.SherpaOnnxSttModel
+import com.ai.assistance.operit.api.voice.PiperVoice
+import com.ai.assistance.operit.api.speech.LocalModelDownloadManager
+import com.ai.assistance.operit.api.speech.DownloadableModel
 import android.text.format.Formatter
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Button
@@ -487,17 +488,7 @@ fun SpeechServicesSettingsScreen(
                             onExpandedChange = { ttsDropdownExpanded = it }
                         ) {
                             OutlinedTextField(
-                                value = when(ttsServiceTypeInput) {
-                                    VoiceServiceFactory.VoiceServiceType.SIMPLE_TTS -> stringResource(R.string.speech_services_tts_type_simple)
-                                    VoiceServiceFactory.VoiceServiceType.HTTP_TTS -> stringResource(R.string.speech_services_tts_type_http)
-                                    VoiceServiceFactory.VoiceServiceType.OPENAI_WS_TTS -> stringResource(R.string.speech_services_tts_type_openai_ws)
-                                    VoiceServiceFactory.VoiceServiceType.SILICONFLOW_TTS -> stringResource(R.string.speech_services_tts_type_siliconflow)
-                                    VoiceServiceFactory.VoiceServiceType.MINIMAX_TTS -> stringResource(R.string.speech_services_tts_type_minimax)
-                                    VoiceServiceFactory.VoiceServiceType.MIMO_TTS -> stringResource(R.string.speech_services_tts_type_mimo)
-                                    VoiceServiceFactory.VoiceServiceType.DOUBAO_TTS -> stringResource(R.string.speech_services_tts_type_doubao)
-                                    VoiceServiceFactory.VoiceServiceType.OPENAI_TTS -> stringResource(R.string.speech_services_tts_type_openai)
-                                    VoiceServiceFactory.VoiceServiceType.VITS_TTS -> stringResource(R.string.speech_services_tts_type_vits)
-                                },
+                                value = ttsServiceTypeLabel(ttsServiceTypeInput),
                                 onValueChange = {},
                                 readOnly = true,
                                 label = { Text(stringResource(R.string.speech_services_tts_engine)) },
@@ -514,22 +505,20 @@ fun SpeechServicesSettingsScreen(
                                     DropdownMenuItem(
                                         text = { 
                                             Text(
-                                                text = when(type) {
-                                                    VoiceServiceFactory.VoiceServiceType.SIMPLE_TTS -> stringResource(R.string.speech_services_tts_type_simple)
-                                                    VoiceServiceFactory.VoiceServiceType.HTTP_TTS -> stringResource(R.string.speech_services_tts_type_http)
-                                                    VoiceServiceFactory.VoiceServiceType.OPENAI_WS_TTS -> stringResource(R.string.speech_services_tts_type_openai_ws)
-                                                    VoiceServiceFactory.VoiceServiceType.SILICONFLOW_TTS -> stringResource(R.string.speech_services_tts_type_siliconflow)
-                                                    VoiceServiceFactory.VoiceServiceType.MINIMAX_TTS -> stringResource(R.string.speech_services_tts_type_minimax)
-                                                    VoiceServiceFactory.VoiceServiceType.MIMO_TTS -> stringResource(R.string.speech_services_tts_type_mimo)
-                                                    VoiceServiceFactory.VoiceServiceType.DOUBAO_TTS -> stringResource(R.string.speech_services_tts_type_doubao)
-                                                    VoiceServiceFactory.VoiceServiceType.OPENAI_TTS -> stringResource(R.string.speech_services_tts_type_openai)
-                                                    VoiceServiceFactory.VoiceServiceType.VITS_TTS -> stringResource(R.string.speech_services_tts_type_vits)
-                                                },
+                                                text = ttsServiceTypeLabel(type),
                                                 fontWeight = if (ttsServiceTypeInput == type) FontWeight.Medium else FontWeight.Normal
                                             ) 
                                         },
                                         onClick = {
                                             ttsServiceTypeInput = type
+                                            if (type == VoiceServiceFactory.VoiceServiceType.PIPER_TTS) {
+                                                if (PiperVoice.byId(ttsVoiceIdInput)?.language != "ru") {
+                                                    ttsVoiceIdInput = PiperVoice.DEFAULT_RU.id
+                                                }
+                                                if (PiperVoice.byId(ttsModelNameInput)?.language != "en") {
+                                                    ttsModelNameInput = ""
+                                                }
+                                            }
                                             if (type == VoiceServiceFactory.VoiceServiceType.DOUBAO_TTS) {
                                                 ttsUrlTemplateInput = DoubaoVoiceProvider.DEFAULT_ENDPOINT_URL
                                                 ttsVoiceIdInput = DoubaoVoiceProvider.DEFAULT_VOICE_ID
@@ -1009,6 +998,44 @@ fun SpeechServicesSettingsScreen(
                                     )
                                 }
                                     }
+                                }
+                            }
+                        }
+
+                        AnimatedVisibility(visible = ttsServiceTypeInput == VoiceServiceFactory.VoiceServiceType.PIPER_TTS) {
+                            Column(modifier = Modifier.padding(top = 16.dp)) {
+                                Text(
+                                    text = stringResource(R.string.piper_tts_voices_title),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = stringResource(R.string.piper_tts_voices_hint),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                PiperVoicePicker(
+                                    label = stringResource(R.string.piper_tts_ru_voice),
+                                    voices = PiperVoice.forLanguage("ru"),
+                                    selectedId = ttsVoiceIdInput,
+                                    noneLabel = null,
+                                    onSelect = { ttsVoiceIdInput = it }
+                                )
+                                PiperVoice.byId(ttsVoiceIdInput)?.let { voice ->
+                                    LocalModelDownloadCard(model = voice, modifier = Modifier.padding(top = 12.dp))
+                                }
+                                Spacer(modifier = Modifier.height(16.dp))
+                                PiperVoicePicker(
+                                    label = stringResource(R.string.piper_tts_en_voice),
+                                    voices = PiperVoice.forLanguage("en"),
+                                    selectedId = ttsModelNameInput,
+                                    noneLabel = stringResource(R.string.piper_tts_en_voice_none),
+                                    onSelect = { ttsModelNameInput = it }
+                                )
+                                PiperVoice.byId(ttsModelNameInput)?.let { voice ->
+                                    LocalModelDownloadCard(model = voice, modifier = Modifier.padding(top = 12.dp))
                                 }
                             }
                         }
@@ -2162,7 +2189,7 @@ fun SpeechServicesSettingsScreen(
                         }
 
                         SpeechServiceFactory.onnxModelFor(sttServiceTypeInput)?.let { model ->
-                            LocalSttModelCard(model = model, modifier = Modifier.padding(top = 16.dp))
+                            LocalModelDownloadCard(model = model, modifier = Modifier.padding(top = 16.dp))
                         }
 
                         AnimatedVisibility(visible = sttServiceTypeInput == SpeechServiceFactory.SpeechServiceType.OPENAI_STT) {
@@ -2747,13 +2774,13 @@ private fun sttServiceTypeLabel(type: SpeechServiceFactory.SpeechServiceType): S
         SpeechServiceFactory.SpeechServiceType.SHERPA_ONNX_GIGAAM_V3 -> stringResource(R.string.speech_services_stt_type_gigaam)
     }
 
-/** 需要下载的本地 STT 模型：显示下载状态并提供下载、取消、删除操作 */
+/** 需要下载的本地语音模型（STT 模型或 TTS 音色）：显示下载状态并提供下载、取消、删除操作 */
 @Composable
-private fun LocalSttModelCard(model: SherpaOnnxSttModel, modifier: Modifier = Modifier) {
+private fun LocalModelDownloadCard(model: DownloadableModel, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    LaunchedEffect(model) { SttModelDownloadManager.refresh(context) }
-    val states by SttModelDownloadManager.states.collectAsState()
-    val state = states[model] ?: SttModelDownloadManager.State.NotDownloaded
+    LaunchedEffect(model) { LocalModelDownloadManager.refresh(context, listOf(model)) }
+    val states by LocalModelDownloadManager.states.collectAsState()
+    val state = states[model.key] ?: LocalModelDownloadManager.State.NotDownloaded
     val totalSize = Formatter.formatShortFileSize(context, model.downloadBytes)
 
     Column(modifier = modifier.fillMaxWidth()) {
@@ -2764,14 +2791,14 @@ private fun LocalSttModelCard(model: SherpaOnnxSttModel, modifier: Modifier = Mo
         )
         Spacer(modifier = Modifier.height(8.dp))
         when (state) {
-            SttModelDownloadManager.State.NotDownloaded -> {
+            LocalModelDownloadManager.State.NotDownloaded -> {
                 Text(stringResource(R.string.stt_model_status_not_downloaded, totalSize), style = MaterialTheme.typography.bodyMedium)
                 Spacer(modifier = Modifier.height(8.dp))
-                Button(onClick = { SttModelDownloadManager.download(context, model) }) {
+                Button(onClick = { LocalModelDownloadManager.download(context, model) }) {
                     Text(stringResource(R.string.stt_model_download))
                 }
             }
-            is SttModelDownloadManager.State.Downloading -> {
+            is LocalModelDownloadManager.State.Downloading -> {
                 val fraction =
                     if (state.totalBytes > 0) (state.downloadedBytes.toFloat() / state.totalBytes).coerceIn(0f, 1f) else 0f
                 LinearProgressIndicator(progress = { fraction }, modifier = Modifier.fillMaxWidth())
@@ -2785,27 +2812,91 @@ private fun LocalSttModelCard(model: SherpaOnnxSttModel, modifier: Modifier = Mo
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedButton(onClick = { SttModelDownloadManager.cancel(model) }) {
+                OutlinedButton(onClick = { LocalModelDownloadManager.cancel(model) }) {
                     Text(stringResource(R.string.stt_model_cancel))
                 }
             }
-            SttModelDownloadManager.State.Ready -> {
+            LocalModelDownloadManager.State.Ready -> {
                 Text(stringResource(R.string.stt_model_status_ready, totalSize), style = MaterialTheme.typography.bodyMedium)
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedButton(onClick = { SttModelDownloadManager.delete(context, model) }) {
+                OutlinedButton(onClick = { LocalModelDownloadManager.delete(context, model) }) {
                     Text(stringResource(R.string.stt_model_delete))
                 }
             }
-            is SttModelDownloadManager.State.Failed -> {
+            is LocalModelDownloadManager.State.Failed -> {
                 Text(
                     stringResource(R.string.stt_model_status_failed, state.message),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Button(onClick = { SttModelDownloadManager.download(context, model) }) {
+                Button(onClick = { LocalModelDownloadManager.download(context, model) }) {
                     Text(stringResource(R.string.stt_model_download))
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ttsServiceTypeLabel(type: VoiceServiceFactory.VoiceServiceType): String =
+    when (type) {
+        VoiceServiceFactory.VoiceServiceType.SIMPLE_TTS -> stringResource(R.string.speech_services_tts_type_simple)
+        VoiceServiceFactory.VoiceServiceType.HTTP_TTS -> stringResource(R.string.speech_services_tts_type_http)
+        VoiceServiceFactory.VoiceServiceType.OPENAI_WS_TTS -> stringResource(R.string.speech_services_tts_type_openai_ws)
+        VoiceServiceFactory.VoiceServiceType.SILICONFLOW_TTS -> stringResource(R.string.speech_services_tts_type_siliconflow)
+        VoiceServiceFactory.VoiceServiceType.MINIMAX_TTS -> stringResource(R.string.speech_services_tts_type_minimax)
+        VoiceServiceFactory.VoiceServiceType.MIMO_TTS -> stringResource(R.string.speech_services_tts_type_mimo)
+        VoiceServiceFactory.VoiceServiceType.DOUBAO_TTS -> stringResource(R.string.speech_services_tts_type_doubao)
+        VoiceServiceFactory.VoiceServiceType.OPENAI_TTS -> stringResource(R.string.speech_services_tts_type_openai)
+        VoiceServiceFactory.VoiceServiceType.VITS_TTS -> stringResource(R.string.speech_services_tts_type_vits)
+        VoiceServiceFactory.VoiceServiceType.PIPER_TTS -> stringResource(R.string.speech_services_tts_type_piper)
+    }
+
+/** Piper 音色选择；[noneLabel] 不为 null 时提供“不使用”选项（选中值为空字符串） */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PiperVoicePicker(
+    label: String,
+    voices: List<PiperVoice>,
+    selectedId: String,
+    noneLabel: String?,
+    onSelect: (String) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedName = PiperVoice.byId(selectedId)?.displayName ?: noneLabel.orEmpty()
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
+        OutlinedTextField(
+            value = selectedName,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label) },
+            trailingIcon = { Icon(Icons.Default.ArrowDropDown, stringResource(R.string.speech_services_dropdown_expand)) },
+            modifier = Modifier.menuAnchor().fillMaxWidth()
+        )
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            if (noneLabel != null) {
+                DropdownMenuItem(
+                    text = { Text(noneLabel) },
+                    onClick = {
+                        onSelect("")
+                        expanded = false
+                    }
+                )
+            }
+            voices.forEach { voice ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = voice.displayName,
+                            fontWeight = if (voice.id == selectedId) FontWeight.Medium else FontWeight.Normal
+                        )
+                    },
+                    onClick = {
+                        onSelect(voice.id)
+                        expanded = false
+                    }
+                )
             }
         }
     }

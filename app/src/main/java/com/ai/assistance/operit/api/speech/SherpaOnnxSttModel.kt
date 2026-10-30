@@ -1,7 +1,11 @@
 package com.ai.assistance.operit.api.speech
 
+import android.content.Context
+import com.ai.assistance.operit.util.OperitPaths
+import java.io.File
+
 /** 可下载的远程文件，按大小和 SHA-256 校验 */
-data class SttRemoteFile(
+data class ModelRemoteFile(
     val name: String,
     val url: String,
     val bytes: Long,
@@ -9,29 +13,51 @@ data class SttRemoteFile(
 )
 
 /** 模型文件的发布形式 */
-sealed class SttModelSource {
+sealed class ModelSource {
     /** 各文件单独下载 */
-    data class Files(val files: List<SttRemoteFile>) : SttModelSource()
+    data class Files(val files: List<ModelRemoteFile>) : ModelSource()
 
-    /** 仅以 tar.bz2 发布：下载校验后解压 [members] 到模型目录 */
-    data class TarBz2(val archive: SttRemoteFile, val members: List<String>) : SttModelSource()
+    /**
+     * 以 tar.bz2 发布：下载校验后解压到模型目录（去掉压缩包内的顶层目录）。
+     * [members] 为 null 时解压全部内容，否则只解压列出的文件名。
+     */
+    data class TarBz2(val archive: ModelRemoteFile, val members: List<String>?) : ModelSource()
+}
+
+/** 运行时下载到应用内部存储的本地语音模型 */
+interface DownloadableModel {
+    /** 全局唯一的下载状态键 */
+    val key: String
+    val displayName: String
+    val source: ModelSource
+    /** 模型目录中加载所需的文件（相对路径） */
+    val requiredFiles: List<String>
+
+    fun dir(context: Context): File
+
+    /** 需要下载的字节数 */
+    val downloadBytes: Long
+        get() = when (val s = source) {
+            is ModelSource.Files -> s.files.sumOf { it.bytes }
+            is ModelSource.TarBz2 -> s.archive.bytes
+        }
 }
 
 /**
  * 运行时下载的 sherpa-onnx NeMo transducer 模型。
  *
- * 模型不打包进 APK，下载到 [com.ai.assistance.operit.util.OperitPaths.sttOnnxModelsDir]，
+ * 模型不打包进 APK，由 [LocalModelDownloadManager] 下载到 [OperitPaths.sttOnnxModelsDir]，
  * 应用更新后保留，卸载应用时才会被删除。
  */
 enum class SherpaOnnxSttModel(
     val dirName: String,
-    val displayName: String,
+    override val displayName: String,
     val encoder: String,
     val decoder: String,
     val joiner: String,
     val languages: List<String>,
-    val source: SttModelSource,
-) {
+    override val source: ModelSource,
+) : DownloadableModel {
     /** NVIDIA Parakeet TDT 0.6B v3：25 种欧洲语言，自动识别语种，带标点和大小写（CC-BY-4.0） */
     PARAKEET_V3(
         dirName = "sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8",
@@ -43,7 +69,7 @@ enum class SherpaOnnxSttModel(
             "ru", "en", "bg", "cs", "da", "de", "el", "es", "et", "fi", "fr", "hr", "hu",
             "it", "lt", "lv", "mt", "nl", "pl", "pt", "ro", "sk", "sl", "sv", "uk",
         ),
-        source = SttModelSource.Files(
+        source = ModelSource.Files(
             huggingFaceFiles(
                 repo = "csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8",
                 commit = "2bda32ec70b097a55adaa07d9a7173915b43cc78",
@@ -64,8 +90,8 @@ enum class SherpaOnnxSttModel(
         decoder = "decoder.int8.onnx",
         joiner = "joiner.int8.onnx",
         languages = listOf("ru", "en", "be", "de", "es", "fr", "hr", "it", "pl", "uk"),
-        source = SttModelSource.TarBz2(
-            archive = SttRemoteFile(
+        source = ModelSource.TarBz2(
+            archive = ModelRemoteFile(
                 name = "sherpa-onnx-nemo-fast-conformer-transducer-be-de-en-es-fr-hr-it-pl-ru-uk-20k-int8.tar.bz2",
                 url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-nemo-fast-conformer-transducer-be-de-en-es-fr-hr-it-pl-ru-uk-20k-int8.tar.bz2",
                 bytes = 106546673L,
@@ -82,7 +108,7 @@ enum class SherpaOnnxSttModel(
         decoder = "decoder.onnx",
         joiner = "joiner.onnx",
         languages = listOf("ru"),
-        source = SttModelSource.Files(
+        source = ModelSource.Files(
             huggingFaceFiles(
                 repo = "csukuangfj/sherpa-onnx-nemo-transducer-punct-giga-am-v3-russian-2025-12-16",
                 commit = "a6039be7cee829a9044a69ac0ebaf1c191217c97",
@@ -96,23 +122,20 @@ enum class SherpaOnnxSttModel(
         ),
     );
 
-    /** 需要下载的字节数 */
-    val downloadBytes: Long
-        get() = when (val s = source) {
-            is SttModelSource.Files -> s.files.sumOf { it.bytes }
-            is SttModelSource.TarBz2 -> s.archive.bytes
-        }
+    override val key: String
+        get() = "stt:$name"
 
-    /** 识别器加载所需的文件 */
-    val requiredFiles: List<String>
+    override val requiredFiles: List<String>
         get() = listOf(encoder, decoder, joiner, "tokens.txt")
+
+    override fun dir(context: Context): File = File(OperitPaths.sttOnnxModelsDir(context), dirName)
 }
 
 private fun huggingFaceFiles(
     repo: String,
     commit: String,
     files: List<Triple<String, Long, String>>,
-): List<SttRemoteFile> =
+): List<ModelRemoteFile> =
     files.map { (name, bytes, sha256) ->
-        SttRemoteFile(name, "https://huggingface.co/$repo/resolve/$commit/$name", bytes, sha256)
+        ModelRemoteFile(name, "https://huggingface.co/$repo/resolve/$commit/$name", bytes, sha256)
     }

@@ -25,6 +25,8 @@ object VoiceServiceFactory {
         OPENAI_TTS,
         /** 基于 VITS/Piper ONNX Runtime 推理形态的本地 TTS 服务 */
         VITS_TTS,
+        /** sherpa-onnx Piper 本地 TTS（运行时下载音色，俄语 + 英语） */
+        PIPER_TTS,
     }
 
     /**
@@ -102,6 +104,14 @@ object VoiceServiceFactory {
                     VitsVoiceProvider(
                         context = context,
                         config = profile.vitsConfig
+                    )
+                }
+                VoiceServiceType.PIPER_TTS -> {
+                    // voiceId：俄语音色；modelName：英语音色（为空表示全部文本使用俄语音色）
+                    PiperVoiceProvider(
+                        context = context,
+                        ruVoiceId = profile.httpConfig.voiceId,
+                        enVoiceId = profile.httpConfig.modelName
                     )
                 }
             }

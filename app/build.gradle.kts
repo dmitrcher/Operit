@@ -356,15 +356,16 @@ val syncMainAssets by tasks.registering(Sync::class) {
     into(generatedMainAssetsDir)
 }
 
-// sherpa-onnx runtime for the downloadable local STT models (Parakeet, FastConformer, GigaAM).
+// sherpa-onnx runtime for the downloadable local STT models (Parakeet, FastConformer, GigaAM) and
+// Piper TTS voices. Pinned to 1.13.x: sherpa-onnx 2.0 removed espeak-ng, which Piper voices need.
 // This AAR links onnxruntime statically into libsherpa-onnx-jni.so, so it does not clash with
 // onnxruntime-android below.
 val sherpaOnnxAarAsset =
     SttModelAsset(
-        targetPath = "sherpa-onnx-static-link-onnxruntime-2.0.1.aar",
-        sourceUrl = "https://github.com/k2-fsa/sherpa-onnx/releases/download/v2.0.1/sherpa-onnx-static-link-onnxruntime-2.0.1.aar",
-        expectedBytes = 38577050,
-        expectedSha256 = "07e042d97f3a6bd5b7fe74d4eef0513dc01a714b16c15a903250095aba43a575",
+        targetPath = "sherpa-onnx-static-link-onnxruntime-1.13.8.aar",
+        sourceUrl = "https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.8/sherpa-onnx-static-link-onnxruntime-1.13.8.aar",
+        expectedBytes = 38691998,
+        expectedSha256 = "b22c3fc1b6a45666d28892bb2f7694beeb77a8362d7ebd77c1a5431ec9435471",
     )
 val generatedSherpaOnnxDir = layout.buildDirectory.dir("generated/sherpa-onnx")
 val sherpaOnnxAarFile = generatedSherpaOnnxDir.map { dir -> dir.file(sherpaOnnxAarAsset.targetPath) }

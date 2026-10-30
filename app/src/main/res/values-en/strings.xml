@@ -8109,6 +8109,16 @@
     <string name="web_session_dialog_title_prompt">Page Input</string>
     <string name="web_session_dialog_empty_message">(Empty Message)</string>
     <string name="speech_services_tts_type_vits">VITS/Piper TTS (Local)</string>
+    <string name="speech_services_tts_type_piper">Piper TTS (local, Russian + English)</string>
+    <string name="piper_tts_voices_title">Piper voices</string>
+    <string name="piper_tts_voices_hint">Cyrillic text is read by the Russian voice and Latin text by the English voice. Without an English voice, all text is read by the Russian voice. Voices are stored in app storage and kept across app updates.</string>
+    <string name="piper_tts_ru_voice">Russian voice</string>
+    <string name="piper_tts_en_voice">English voice</string>
+    <string name="piper_tts_en_voice_none">None</string>
+    <string name="piper_tts_error_voice_not_set">No Russian Piper voice selected</string>
+    <string name="piper_tts_error_voice_not_downloaded">The Piper voice %1$s is not downloaded. Download it in the speech services settings.</string>
+    <string name="piper_tts_error_init_failed">Failed to initialize Piper TTS</string>
+    <string name="piper_tts_error_sample_rate_mismatch">The selected Piper voices have different sample rates and cannot be combined</string>
     <string name="speech_services_vits_config">VITS/Piper TTS Configuration</string>
     <string name="speech_services_vits_package_path">VITS/Piper Package Path</string>
     <string name="speech_services_vits_package_path_placeholder">e.g., /sdcard/Download/tts/voice.zip</string>
