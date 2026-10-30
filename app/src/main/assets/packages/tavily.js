@@ -65,6 +65,8 @@
         }
     ]
 }*/
+const L = (zh, en) => (String(getLang() ?? "").toLowerCase().startsWith("zh") ? zh : en);
+
 const tavily = (function () {
     const client = OkHttp.newClient();
     const BASE_URLS = {
@@ -171,10 +173,10 @@ const tavily = (function () {
         }
     }
     return {
-        search: (p) => wrap(search, p, '搜索成功', '搜索失败'),
-        extract: (p) => wrap(extract, p, '提取成功', '提取失败'),
-        crawl: (p) => wrap(crawl, p, '爬取成功', '爬取失败'),
-        map: (p) => wrap(map, p, '映射成功', '映射失败')
+        search: (p) => wrap(search, p, L('搜索成功', 'Search succeeded'), L('搜索失败', 'Search failed')),
+        extract: (p) => wrap(extract, p, L('提取成功', 'Extraction succeeded'), L('提取失败', 'Extraction failed')),
+        crawl: (p) => wrap(crawl, p, L('爬取成功', 'Crawl succeeded'), L('爬取失败', 'Crawl failed')),
+        map: (p) => wrap(map, p, L('映射成功', 'Mapping succeeded'), L('映射失败', 'Mapping failed'))
     };
 })();
 exports.search = tavily.search;

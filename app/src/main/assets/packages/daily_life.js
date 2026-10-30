@@ -257,6 +257,8 @@ METADATA
         }
     ]
 }*/
+const L = (zh, en) => (String(getLang() ?? "").toLowerCase().startsWith("zh") ? zh : en);
+
 const dailyLife = (function () {
     /**
      * Get the current date and time in various formats
@@ -374,13 +376,13 @@ const dailyLife = (function () {
                 url: result.url,
                 title: result.title,
                 weather_info: extractedInfo,
-                note: "天气数据来自网页内容提取，仅供参考。"
+                note: L("天气数据来自网页内容提取，仅供参考。", "Weather data is extracted from web page content and is for reference only.")
             };
         }
         catch (error) {
             console.error(`[search_weather] 错误: ${error.message}`);
             console.error(error.stack);
-            throw new Error(`获取天气信息失败: ${error.message}`);
+            throw new Error(L(`获取天气信息失败: ${error.message}`, `Failed to get weather information: ${error.message}`));
         }
     }
     /**
@@ -453,7 +455,7 @@ const dailyLife = (function () {
             // 返回结果
             return {
                 success: true,
-                message: "提醒创建成功",
+                message: L("提醒创建成功", "Reminder created successfully"),
                 title: params.title,
                 description: params.description || undefined,
                 due_date: params.due_date || undefined,
@@ -466,7 +468,7 @@ const dailyLife = (function () {
             console.error(error.stack);
             return {
                 success: false,
-                message: `创建提醒失败: ${error.message}`,
+                message: L(`创建提醒失败: ${error.message}`, `Failed to create reminder: ${error.message}`),
                 title: params.title,
                 description: params.description || undefined,
                 due_date: params.due_date || undefined,
@@ -489,10 +491,10 @@ const dailyLife = (function () {
         const resolvedSenderName = getCallerName();
         const resolvedLang = getLang();
         const workflowName = resolvedLang?.toLowerCase()?.startsWith("zh")
-            ? `一次性定时任务 ${params.trigger_time}`
+            ? L(`一次性定时任务 ${params.trigger_time}`, `One-time scheduled task ${params.trigger_time}`)
             : `One-time scheduled task ${params.trigger_time}`;
         const description = resolvedLang?.toLowerCase()?.startsWith("zh")
-            ? `一次性定时任务，触发时间 ${params.trigger_time}`
+            ? L(`一次性定时任务，触发时间 ${params.trigger_time}`, `One-time scheduled task, trigger time ${params.trigger_time}`)
             : `One-time scheduled task at ${params.trigger_time}`;
         const timedTriggerTag = `[定时触发:${params.trigger_time}]\n[Scheduled Trigger:${params.trigger_time}]`;
         const defaultMessage = `[自动任务] 时间到了，开始执行一次性定时任务。现在是 ${params.trigger_time}\n[Automated Task] Time reached, start executing the one-time scheduled task. Current time is ${params.trigger_time}`;
@@ -539,14 +541,14 @@ const dailyLife = (function () {
         }
         const nodeTexts = resolvedLang?.toLowerCase()?.startsWith("zh")
             ? {
-                triggerName: "定时触发",
-                triggerDesc: "一次性定时触发",
-                startName: "启动对话服务",
-                startDesc: "启动对话服务以便发送消息",
-                sendName: "唤醒AI",
-                sendDesc: "向对话发送唤醒消息，触发AI执行任务",
-                deleteName: "删除工作流",
-                deleteDesc: "执行后删除自己"
+                triggerName: L("定时触发", "Scheduled trigger"),
+                triggerDesc: L("一次性定时触发", "One-time scheduled trigger"),
+                startName: L("启动对话服务", "Start chat service"),
+                startDesc: L("启动对话服务以便发送消息", "Start the chat service so messages can be sent"),
+                sendName: L("唤醒AI", "Wake AI"),
+                sendDesc: L("向对话发送唤醒消息，触发AI执行任务", "Send a wake-up message to the chat to make the AI run the task"),
+                deleteName: L("删除工作流", "Delete workflow"),
+                deleteDesc: L("执行后删除自己", "Delete itself after execution")
             }
             : {
                 triggerName: "Scheduled Trigger",
@@ -632,7 +634,7 @@ const dailyLife = (function () {
         });
         return {
             success: true,
-            message: "一次性提醒工作流已创建",
+            message: L("一次性提醒工作流已创建", "One-time reminder workflow created"),
             data: {
                 workflow_id: workflowId,
                 trigger_time: params.trigger_time,
@@ -688,7 +690,7 @@ const dailyLife = (function () {
             // 返回结果
             return {
                 success: true,
-                message: "闹钟设置成功",
+                message: L("闹钟设置成功", "Alarm set successfully"),
                 alarm_time: `${params.hour.toString().padStart(2, '0')}:${params.minute.toString().padStart(2, '0')}`,
                 label: params.message || undefined,
                 repeat_days: params.days || undefined,
@@ -701,7 +703,7 @@ const dailyLife = (function () {
             console.error(error.stack);
             return {
                 success: false,
-                message: `设置闹钟失败: ${error.message}`,
+                message: L(`设置闹钟失败: ${error.message}`, `Failed to set alarm: ${error.message}`),
                 alarm_time: `${params.hour.toString().padStart(2, '0')}:${params.minute.toString().padStart(2, '0')}`,
                 label: params.message || undefined,
                 repeat_days: params.days || undefined,
@@ -735,17 +737,17 @@ const dailyLife = (function () {
             const result = await intent.start();
             return {
                 success: true,
-                message: "短信编辑界面已打开",
+                message: L("短信编辑界面已打开", "SMS compose screen opened"),
                 phone_number: params.phone_number,
                 content_preview: params.message.length > 30 ? params.message.substring(0, 30) + "..." : params.message,
                 raw_result: result
             };
         }
         catch (error) {
-            console.error(`发送短信失败: ${error.message}`);
+            console.error(L(`发送短信失败: ${error.message}`, `Failed to send SMS: ${error.message}`));
             return {
                 success: false,
-                message: `发送短信失败: ${error.message}`,
+                message: L(`发送短信失败: ${error.message}`, `Failed to send SMS: ${error.message}`),
                 phone_number: params.phone_number
             };
         }
@@ -768,7 +770,7 @@ const dailyLife = (function () {
             const result = await intent.start();
             return {
                 success: true,
-                message: "已打开微信分享界面，请选择联系人并确认发送",
+                message: L("已打开微信分享界面，请选择联系人并确认发送", "WeChat share screen opened, please choose a contact and confirm sending"),
                 content_preview: params.message.length > 30 ? params.message.substring(0, 30) + "..." : params.message,
                 raw_result: result
             };
@@ -778,7 +780,7 @@ const dailyLife = (function () {
             console.error(error.stack);
             return {
                 success: false,
-                message: `调用微信发送消息失败: ${error.message}`,
+                message: L(`调用微信发送消息失败: ${error.message}`, `Failed to call WeChat to send message: ${error.message}`),
                 content_preview: params.message ? (params.message.length > 30 ? params.message.substring(0, 30) + "..." : params.message) : ""
             };
         }
@@ -801,7 +803,7 @@ const dailyLife = (function () {
             const result = await intent.start();
             return {
                 success: true,
-                message: "已打开 QQ 分享界面，请选择联系人并确认发送",
+                message: L("已打开 QQ 分享界面，请选择联系人并确认发送", "QQ share screen opened, please choose a contact and confirm sending"),
                 content_preview: params.message.length > 30 ? params.message.substring(0, 30) + "..." : params.message,
                 raw_result: result
             };
@@ -811,7 +813,7 @@ const dailyLife = (function () {
             console.error(error.stack);
             return {
                 success: false,
-                message: `调用 QQ 发送消息失败: ${error.message}`,
+                message: L(`调用 QQ 发送消息失败: ${error.message}`, `Failed to call QQ to send message: ${error.message}`),
                 content_preview: params.message ? (params.message.length > 30 ? params.message.substring(0, 30) + "..." : params.message) : ""
             };
         }
@@ -835,7 +837,7 @@ const dailyLife = (function () {
             const result = await intent.start();
             return {
                 success: true,
-                message: "已打开微信朋友圈发表界面，请确认内容并发送",
+                message: L("已打开微信朋友圈发表界面，请确认内容并发送", "WeChat Moments post screen opened, please confirm the content and send"),
                 content_preview: params.message.length > 30 ? params.message.substring(0, 30) + "..." : params.message,
                 raw_result: result
             };
@@ -845,7 +847,7 @@ const dailyLife = (function () {
             console.error(error.stack);
             return {
                 success: false,
-                message: `调用微信朋友圈失败: ${error.message}`,
+                message: L(`调用微信朋友圈失败: ${error.message}`, `Failed to call WeChat Moments: ${error.message}`),
                 content_preview: params.message ? (params.message.length > 30 ? params.message.substring(0, 30) + "..." : params.message) : ""
             };
         }
@@ -875,17 +877,17 @@ const dailyLife = (function () {
             const result = await intent.start();
             return {
                 success: true,
-                message: isEmergency ? "紧急电话已拨打" : "拨号界面已打开",
+                message: isEmergency ? L("紧急电话已拨打", "Emergency call placed") : L("拨号界面已打开", "Dialer opened"),
                 phone_number: params.phone_number,
                 is_emergency: isEmergency,
                 raw_result: result
             };
         }
         catch (error) {
-            console.error(`拨打电话失败: ${error.message}`);
+            console.error(L(`拨打电话失败: ${error.message}`, `Failed to place call: ${error.message}`));
             return {
                 success: false,
-                message: `拨打电话失败: ${error.message}`,
+                message: L(`拨打电话失败: ${error.message}`, `Failed to place call: ${error.message}`),
                 phone_number: params.phone_number,
                 is_emergency: params.emergency === true
             };
@@ -905,7 +907,7 @@ const dailyLife = (function () {
             if (state !== 'on' && state !== 'off') {
                 throw new Error("Invalid state. Must be 'on' or 'off'");
             }
-            console.log(`${state === 'on' ? '打开' : '关闭'}手电筒...`);
+            console.log(`${state === 'on' ? '打开' : L('关闭', 'off')}手电筒...`);
             // Convert state to numeric value (1 for on, 0 for off)
             const stateValue = state === 'on' ? '1' : '0';
             // Set FlashState using Tools.System.setSetting
@@ -916,17 +918,17 @@ const dailyLife = (function () {
             console.log(`back_flashlight_state 设置结果: ${JSON.stringify(backFlashlightResult)}`);
             return {
                 success: true,
-                message: `手电筒已${state === 'on' ? '打开' : '关闭'}`,
+                message: L(`手电筒已${state === 'on' ? '打开' : L('关闭', 'off')}`, `Flashlight turned ${state === 'on' ? 'on' : 'off'}`),
                 state: state,
                 flash_state_result: flashStateResult,
                 back_flashlight_result: backFlashlightResult
             };
         }
         catch (error) {
-            console.error(`手电筒操作失败: ${error.message}`);
+            console.error(L(`手电筒操作失败: ${error.message}`, `Flashlight operation failed: ${error.message}`));
             return {
                 success: false,
-                message: `手电筒操作失败: ${error.message}`,
+                message: L(`手电筒操作失败: ${error.message}`, `Flashlight operation failed: ${error.message}`),
                 state: params.state
             };
         }
@@ -950,22 +952,22 @@ const dailyLife = (function () {
             if (!Number.isFinite(count) || count < 1 || count > 20) {
                 throw new Error("Count must be a number between 1 and 20");
             }
-            console.log(`调节音量: ${action === 'up' ? '增加' : action === 'down' ? '减小' : '静音'}, 次数: ${count}`);
+            console.log(`调节音量: ${action === 'up' ? L('增加', 'increase') : action === 'down' ? L('减小', 'decrease') : L('静音', 'mute')}, 次数: ${count}`);
             // Map action to Android key code string
             let keyCode;
             let actionName;
             switch (action) {
                 case 'up':
                     keyCode = 'KEYCODE_VOLUME_UP';
-                    actionName = '增加';
+                    actionName = L('增加', 'increase');
                     break;
                 case 'down':
                     keyCode = 'KEYCODE_VOLUME_DOWN';
-                    actionName = '减小';
+                    actionName = L('减小', 'decrease');
                     break;
                 case 'mute':
                     keyCode = 'KEYCODE_VOLUME_MUTE';
-                    actionName = '静音';
+                    actionName = L('静音', 'mute');
                     count = 1; // Mute should only be pressed once
                     break;
                 default:
@@ -984,7 +986,7 @@ const dailyLife = (function () {
             }
             return {
                 success: true,
-                message: `音量${actionName}操作完成，共执行 ${count} 次`,
+                message: L(`音量${actionName}操作完成，共执行 ${count} 次`, `Volume ${actionName} completed, executed ${count} time(s)`),
                 action: action,
                 key_code: keyCode,
                 count: count,
@@ -992,10 +994,10 @@ const dailyLife = (function () {
             };
         }
         catch (error) {
-            console.error(`音量调节失败: ${error.message}`);
+            console.error(L(`音量调节失败: ${error.message}`, `Volume adjustment failed: ${error.message}`));
             return {
                 success: false,
-                message: `音量调节失败: ${error.message}`,
+                message: L(`音量调节失败: ${error.message}`, `Volume adjustment failed: ${error.message}`),
                 action: params.action,
                 count: params.count || 1
             };
@@ -1011,21 +1013,21 @@ const dailyLife = (function () {
                 throw new Error("State is required and must be 'on' or 'off'");
             }
             const state = params.state.toLowerCase();
-            console.log(`${state === 'on' ? '开启' : '关闭'} Wi-Fi...`);
+            console.log(`${state === 'on' ? L('开启', 'on') : L('关闭', 'off')} Wi-Fi...`);
             const command = state === 'on' ? 'svc wifi enable' : 'svc wifi disable';
             const result = await Tools.System.shell(command);
             return {
                 success: true,
-                message: `Wi-Fi 已${state === 'on' ? '开启' : '关闭'}`,
+                message: L(`Wi-Fi 已${state === 'on' ? L('开启', 'on') : L('关闭', 'off')}`, `Wi-Fi turned ${state === 'on' ? 'on' : 'off'}`),
                 state: state,
                 raw_result: result
             };
         }
         catch (error) {
-            console.error(`Wi-Fi 操作失败: ${error.message}`);
+            console.error(L(`Wi-Fi 操作失败: ${error.message}`, `Wi-Fi operation failed: ${error.message}`));
             return {
                 success: false,
-                message: `Wi-Fi 操作失败: ${error.message}`,
+                message: L(`Wi-Fi 操作失败: ${error.message}`, `Wi-Fi operation failed: ${error.message}`),
                 state: params.state
             };
         }
@@ -1051,16 +1053,16 @@ const dailyLife = (function () {
             console.log(`截图已保存到: ${filePath}`);
             return {
                 success: true,
-                message: `截图已保存到 ${filePath}`,
+                message: L(`截图已保存到 ${filePath}`, `Screenshot saved to ${filePath}`),
                 file_path: filePath,
                 raw_result: result
             };
         }
         catch (error) {
-            console.error(`截图失败: ${error.message}`);
+            console.error(L(`截图失败: ${error.message}`, `Screenshot failed: ${error.message}`));
             return {
                 success: false,
-                message: `截图失败: ${error.message}`
+                message: L(`截图失败: ${error.message}`, `Screenshot failed: ${error.message}`)
             };
         }
     }
@@ -1075,15 +1077,15 @@ const dailyLife = (function () {
             const result = await intent.start();
             return {
                 success: true,
-                message: "相机应用已打开",
+                message: L("相机应用已打开", "Camera app opened"),
                 raw_result: result
             };
         }
         catch (error) {
-            console.error(`打开相机失败: ${error.message}`);
+            console.error(L(`打开相机失败: ${error.message}`, `Failed to open camera: ${error.message}`));
             return {
                 success: false,
-                message: `打开相机失败: ${error.message}`
+                message: L(`打开相机失败: ${error.message}`, `Failed to open camera: ${error.message}`)
             };
         }
     }
@@ -1102,15 +1104,15 @@ const dailyLife = (function () {
             switch (state) {
                 case 'on':
                     shellArg = 'yes';
-                    stateName = '开启';
+                    stateName = L('开启', 'on');
                     break;
                 case 'off':
                     shellArg = 'no';
-                    stateName = '关闭';
+                    stateName = L('关闭', 'off');
                     break;
                 case 'auto':
                     shellArg = 'auto';
-                    stateName = '自动';
+                    stateName = L('自动', 'auto');
                     break;
                 default:
                     throw new Error("Invalid state. Must be 'on', 'off', or 'auto'");
@@ -1120,16 +1122,16 @@ const dailyLife = (function () {
             const result = await Tools.System.shell(command);
             return {
                 success: true,
-                message: `深夜模式已设置为 ${stateName}`,
+                message: L(`深夜模式已设置为 ${stateName}`, `Night mode set to ${stateName}`),
                 state: state,
                 raw_result: result
             };
         }
         catch (error) {
-            console.error(`深夜模式操作失败: ${error.message}`);
+            console.error(L(`深夜模式操作失败: ${error.message}`, `Night mode operation failed: ${error.message}`));
             return {
                 success: false,
-                message: `深夜模式操作失败: ${error.message}`,
+                message: L(`深夜模式操作失败: ${error.message}`, `Night mode operation failed: ${error.message}`),
                 state: params.state
             };
         }
@@ -1214,7 +1216,7 @@ const dailyLife = (function () {
             //     results.alarm = alarmResult;
             //     console.log("✓ 设置闹钟成功");
             // } catch (error) {
-            //     results.alarm = { error: `设置闹钟失败: ${error.message}` };
+            //     results.alarm = { error: L(`设置闹钟失败: ${error.message}`, `Failed to set alarm: ${error.message}`) };
             //     console.log("✗ 设置闹钟失败");
             // }
             // // 6. 测试发送消息功能
@@ -1274,7 +1276,7 @@ const dailyLife = (function () {
             //     results.screenshot = screenshotResult;
             //     console.log("✓ 截图成功");
             // } catch (error) {
-            //     results.screenshot = { error: `截图失败: ${error.message}` };
+            //     results.screenshot = { error: L(`截图失败: ${error.message}`, `Screenshot failed: ${error.message}`) };
             //     console.log("✗ 截图失败");
             // }
             // 10. Test taking a photo
@@ -1289,7 +1291,7 @@ const dailyLife = (function () {
             //         console.log(`✗ 打开相机失败: ${photoResult.message}`);
             //     }
             // } catch (error) {
-            //     results.photo = { error: `打开相机失败: ${error.message}` };
+            //     results.photo = { error: L(`打开相机失败: ${error.message}`, `Failed to open camera: ${error.message}`) };
             //     console.log("✗ 打开相机失败");
             // }
             // 11. Test toggling dark mode

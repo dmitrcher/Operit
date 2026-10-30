@@ -247,6 +247,8 @@
     }
   ]
 }*/
+const L = (zh, en) => (String(getLang() ?? "").toLowerCase().startsWith("zh") ? zh : en);
+
 const various_search = (function () {
     function normalizeText(input) {
         if (!input)
@@ -736,7 +738,7 @@ const various_search = (function () {
         try {
             const response = await Tools.Net.visit({ url });
             if (!response) {
-                throw new Error(`无法获取 ${platform} 搜索结果`);
+                throw new Error(L(`无法获取 ${platform} 搜索结果`, `Unable to get ${platform} search results`));
             }
             let parts = [];
             let hasFilteredLinks = false;
@@ -771,7 +773,7 @@ const various_search = (function () {
         catch (error) {
             return {
                 platform,
-                content: `${platform} 搜索失败: ${error.message}`
+                content: L(`${platform} 搜索失败: ${error.message}`, `${platform} search failed: ${error.message}`)
             };
         }
     }
@@ -779,7 +781,7 @@ const various_search = (function () {
         try {
             const response = await Tools.Net.visit({ url, include_image_links: true });
             if (!response) {
-                throw new Error(`无法获取 ${platform} 图片搜索结果`);
+                throw new Error(L(`无法获取 ${platform} 图片搜索结果`, `Unable to get ${platform} image search results`));
             }
             let parts = [];
             if (response.visitKey !== undefined) {
@@ -806,7 +808,7 @@ const various_search = (function () {
         catch (error) {
             return {
                 platform,
-                content: `${platform} 图片搜索失败: ${error.message}`
+                content: L(`${platform} 图片搜索失败: ${error.message}`, `${platform} image search failed: ${error.message}`)
             };
         }
     }
@@ -901,7 +903,7 @@ const various_search = (function () {
                 }
             }
             else {
-                searchPromises.push(Promise.resolve({ platform, success: false, message: `不支持的搜索平台: ${platform}` }));
+                searchPromises.push(Promise.resolve({ platform, success: false, message: L(`不支持的搜索平台: ${platform}`, `Unsupported search platform: ${platform}`) }));
             }
         }
         return Promise.all(searchPromises);

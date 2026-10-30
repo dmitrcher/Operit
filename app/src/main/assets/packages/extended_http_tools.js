@@ -48,6 +48,8 @@
         }
     ]
 }*/
+const L = (zh, en) => (String(getLang() ?? "").toLowerCase().startsWith("zh") ? zh : en);
+
 const ExtendedHttpTools = (function () {
     const MAX_INLINE_HTTP_RESPONSE_CHARS = 12000;
     async function http_request(params) {
@@ -91,7 +93,7 @@ const ExtendedHttpTools = (function () {
             };
             return {
                 success,
-                message: `HTTP 请求完成；响应内容过大，已保存到文件：${filePath}。请使用 read_file_part 读取指定行范围，或用 grep_code 在该文件中检索关键字。`,
+                message: L(`HTTP 请求完成；响应内容过大，已保存到文件：${filePath}。请使用 read_file_part 读取指定行范围，或用 grep_code 在该文件中检索关键字。`, `HTTP request completed; the response was too large and was saved to file: ${filePath}. Use read_file_part to read a line range, or grep_code to search for keywords in that file.`),
                 data: {
                     result: resultMeta,
                     content_saved_to: filePath,
@@ -99,7 +101,7 @@ const ExtendedHttpTools = (function () {
                 },
             };
         }
-        return { success, message: 'HTTP 请求完成', data: result };
+        return { success, message: L('HTTP 请求完成', 'HTTP request completed'), data: result };
     }
     async function multipart_request(params) {
         const toolParams = {
@@ -116,7 +118,7 @@ const ExtendedHttpTools = (function () {
             toolParams.ignore_ssl = params.ignore_ssl;
         const result = await toolCall({ name: "multipart_request", params: toolParams });
         const success = result.statusCode >= 200 && result.statusCode < 400;
-        return { success, message: '文件上传完成', data: result };
+        return { success, message: L('文件上传完成', 'File upload completed'), data: result };
     }
     async function manage_cookies(params) {
         const toolParams = {
@@ -128,7 +130,7 @@ const ExtendedHttpTools = (function () {
             toolParams.cookies = params.cookies;
         const result = await toolCall({ name: "manage_cookies", params: toolParams });
         const success = result.statusCode >= 200 && result.statusCode < 400;
-        return { success, message: 'Cookies 操作完成', data: result };
+        return { success, message: L('Cookies 操作完成', 'Cookies operation completed'), data: result };
     }
     async function wrapToolExecution(func, params) {
         try {
@@ -139,7 +141,7 @@ const ExtendedHttpTools = (function () {
             console.error(`Tool ${func.name} failed unexpectedly`, error);
             complete({
                 success: false,
-                message: `工具执行时发生意外错误: ${error.message}`,
+                message: L(`工具执行时发生意外错误: ${error.message}`, `Unexpected error while executing tool: ${error.message}`),
             });
         }
     }

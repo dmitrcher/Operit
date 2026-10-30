@@ -48,6 +48,8 @@
   ]
 }*/
 /// <reference path="./types/index.d.ts" />
+const L = (zh, en) => (String(getLang() ?? "").toLowerCase().startsWith("zh") ? zh : en);
+
 const zhipuSearch = (function () {
     const API_URL = "https://open.bigmodel.cn/api/paas/v4/web_search";
     const TIMEOUT = 60000;
@@ -68,7 +70,7 @@ const zhipuSearch = (function () {
     async function httpPost(body, apiKey) {
         const key = getApiKey(apiKey || undefined);
         if (!key) {
-            throw new Error("未设置 API Key，请配置 ZHIPU_SEARCH_API_KEY 环境变量或在调用时传入 api_key 参数");
+            throw new Error(L("未设置 API Key，请配置 ZHIPU_SEARCH_API_KEY 环境变量或在调用时传入 api_key 参数", "API Key is not set, please configure the ZHIPU_SEARCH_API_KEY environment variable or pass the api_key parameter when calling"));
         }
         const request = client
             .newRequest()
@@ -142,14 +144,14 @@ const zhipuSearch = (function () {
             const result = await search(params);
             complete({
                 success: true,
-                message: "搜索完成，找到 " + result.count + " 条结果",
+                message: L("搜索完成，找到 ", "Search completed, found") + result.count + L(" 条结果", " result(s)"),
                 data: result
             });
         }
         catch (error) {
             complete({
                 success: false,
-                message: "搜索失败：" + error.message,
+                message: L("搜索失败：", "Search failed:") + error.message,
                 error_stack: error.stack
             });
         }
@@ -159,14 +161,14 @@ const zhipuSearch = (function () {
             const result = await test();
             complete({
                 success: true,
-                message: "连接成功，延迟 " + result.latency + "ms",
+                message: L("连接成功，延迟 ", "Connection succeeded, latency") + result.latency + "ms",
                 data: result
             });
         }
         catch (error) {
             complete({
                 success: false,
-                message: "测试失败：" + error.message,
+                message: L("测试失败：", "Test failed:") + error.message,
                 error_stack: error.stack
             });
         }

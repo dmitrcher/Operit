@@ -71,6 +71,8 @@
   ]
 }*/
 /// <reference path="./types/index.d.ts" />
+const L = (zh, en) => (String(getLang() ?? "").toLowerCase().startsWith("zh") ? zh : en);
+
 const minimaxDraw = (function () {
     const HTTP_TIMEOUT_MS = 600000;
     const client = OkHttp.newBuilder()
@@ -99,7 +101,7 @@ const minimaxDraw = (function () {
     function getApiKey() {
         const apiKey = String(getEnv("MINIMAX_API_KEY") || "").trim();
         if (!apiKey) {
-            throw new Error("MINIMAX_API_KEY 未配置，请先在环境变量中设置 MiniMax API Key。");
+            throw new Error(L("MINIMAX_API_KEY 未配置，请先在环境变量中设置 MiniMax API Key。", "MINIMAX_API_KEY is not configured, please set the MiniMax API Key in environment variables first."));
         }
         return apiKey;
     }
@@ -175,13 +177,13 @@ const minimaxDraw = (function () {
         }
         const numberValue = typeof value === "number" ? value : Number(String(value));
         if (!Number.isFinite(numberValue) || numberValue <= 0 || !Number.isInteger(numberValue)) {
-            throw new Error(`${fieldName} 必须是正整数。`);
+            throw new Error(L(`${fieldName} 必须是正整数。`, `${fieldName} must be a positive integer.`));
         }
         if (options && options.min !== undefined && numberValue < options.min) {
-            throw new Error(`${fieldName} 不能小于 ${options.min}。`);
+            throw new Error(L(`${fieldName} 不能小于 ${options.min}。`, `${fieldName} cannot be less than ${options.min}.`));
         }
         if (options && options.max !== undefined && numberValue > options.max) {
-            throw new Error(`${fieldName} 不能大于 ${options.max}。`);
+            throw new Error(L(`${fieldName} 不能大于 ${options.max}。`, `${fieldName} cannot be greater than ${options.max}.`));
         }
         return numberValue;
     }
@@ -191,7 +193,7 @@ const minimaxDraw = (function () {
         }
         const numberValue = typeof value === "number" ? value : Number(String(value));
         if (!Number.isFinite(numberValue) || !Number.isInteger(numberValue)) {
-            throw new Error(`${fieldName} 必须是整数。`);
+            throw new Error(L(`${fieldName} 必须是整数。`, `${fieldName} must be an integer.`));
         }
         return numberValue;
     }
@@ -209,12 +211,12 @@ const minimaxDraw = (function () {
         if (normalized === "false" || normalized === "0" || normalized === "no") {
             return false;
         }
-        throw new Error(`${fieldName} 必须是布尔值。`);
+        throw new Error(L(`${fieldName} 必须是布尔值。`, `${fieldName} must be a boolean.`));
     }
     function normalizeResponseFormat(value) {
         const normalized = String(value || DEFAULT_RESPONSE_FORMAT).trim().toLowerCase();
         if (normalized !== "url" && normalized !== "base64") {
-            throw new Error("response_format 仅支持 url 或 base64。");
+            throw new Error(L("response_format 仅支持 url 或 base64。", "response_format only supports url or base64."));
         }
         return normalized;
     }
@@ -223,10 +225,10 @@ const minimaxDraw = (function () {
         if (!normalized)
             return undefined;
         if (!SUPPORTED_ASPECT_RATIOS.includes(normalized)) {
-            throw new Error(`aspect_ratio 仅支持 ${SUPPORTED_ASPECT_RATIOS.join("、")}。`);
+            throw new Error(L(`aspect_ratio 仅支持 ${SUPPORTED_ASPECT_RATIOS.join("、")}。`, `aspect_ratio only supports ${SUPPORTED_ASPECT_RATIOS.join(", ")}.`));
         }
         if (normalized === "21:9" && String(model || "").trim() !== "image-01") {
-            throw new Error("aspect_ratio=21:9 仅支持 model=image-01。");
+            throw new Error(L("aspect_ratio=21:9 仅支持 model=image-01。", "aspect_ratio=21:9 only supports model=image-01."));
         }
         return normalized;
     }
@@ -246,16 +248,16 @@ const minimaxDraw = (function () {
             };
         }
         if (width === undefined || height === undefined) {
-            throw new Error("width 和 height 需要同时传入。");
+            throw new Error(L("width 和 height 需要同时传入。", "width and height must be provided together."));
         }
         if (String(model || "").trim() !== "image-01") {
-            throw new Error("width 和 height 仅支持 model=image-01。");
+            throw new Error(L("width 和 height 仅支持 model=image-01。", "width and height only support model=image-01."));
         }
         if (width < 512 || width > 2048 || width % 8 !== 0) {
-            throw new Error("width 需要在 512-2048 之间，且必须为 8 的倍数。");
+            throw new Error(L("width 需要在 512-2048 之间，且必须为 8 的倍数。", "width must be between 512 and 2048 and a multiple of 8."));
         }
         if (height < 512 || height > 2048 || height % 8 !== 0) {
-            throw new Error("height 需要在 512-2048 之间，且必须为 8 的倍数。");
+            throw new Error(L("height 需要在 512-2048 之间，且必须为 8 的倍数。", "height must be between 512 and 2048 and a multiple of 8."));
         }
         return { width, height };
     }
@@ -288,7 +290,7 @@ const minimaxDraw = (function () {
                 .map(item => item.trim())
                 .filter(item => item.length > 0);
         }
-        throw new Error(`${fieldName} 必须是字符串数组、JSON 字符串或逗号分隔字符串。`);
+        throw new Error(L(`${fieldName} 必须是字符串数组、JSON 字符串或逗号分隔字符串。`, `${fieldName} must be a string array, a JSON string, or a comma-separated string.`));
     }
     function isProbablyUrl(value) {
         return /^https?:\/\//i.test(String(value || "").trim());
@@ -311,11 +313,11 @@ const minimaxDraw = (function () {
     async function uploadImageToBeeimg(filePath) {
         const exists = await Tools.Files.exists(filePath);
         if (!exists.exists) {
-            throw new Error(`参考图文件不存在: ${filePath}`);
+            throw new Error(L(`参考图文件不存在: ${filePath}`, `Reference image file does not exist: ${filePath}`));
         }
         const apiKey = getBeeimgApiKey();
         if (!apiKey) {
-            throw new Error("使用 image_paths 需要配置 BEEIMG_API_KEY，用于先把本地参考图上传到公网图床。");
+            throw new Error(L("使用 image_paths 需要配置 BEEIMG_API_KEY，用于先把本地参考图上传到公网图床。", "Using image_paths requires BEEIMG_API_KEY, used to first upload local reference images to a public image host."));
         }
         const response = await Tools.Net.uploadFile({
             url: BEEIMG_UPLOAD_ENDPOINT,
@@ -332,21 +334,21 @@ const minimaxDraw = (function () {
             ]
         });
         if (response.statusCode < 200 || response.statusCode >= 300) {
-            throw new Error(`BeeIMG 上传失败: HTTP ${response.statusCode} - ${response.content}`);
+            throw new Error(L(`BeeIMG 上传失败: HTTP ${response.statusCode} - ${response.content}`, `BeeIMG upload failed: HTTP ${response.statusCode} - ${response.content}`));
         }
         let parsed;
         try {
             parsed = JSON.parse(response.content);
         }
         catch (error) {
-            throw new Error(`解析 BeeIMG 响应失败: ${getErrorMessage(error)}`);
+            throw new Error(L(`解析 BeeIMG 响应失败: ${getErrorMessage(error)}`, `Failed to parse BeeIMG response: ${getErrorMessage(error)}`));
         }
         const files = isRecord(parsed) && isRecord(parsed.files) ? parsed.files : null;
         const fileUrl = files && files.url ? String(files.url).trim() : "";
         const code = files && files.code !== undefined ? String(files.code) : "";
         const status = files && files.status ? String(files.status) : "";
         if (!fileUrl || (code !== "200" && code !== "" && status !== "Success")) {
-            throw new Error(`BeeIMG 上传失败: ${response.content}`);
+            throw new Error(L(`BeeIMG 上传失败: ${response.content}`, `BeeIMG upload failed: ${response.content}`));
         }
         return fileUrl;
     }
@@ -355,7 +357,7 @@ const minimaxDraw = (function () {
         const resolvedPaths = parseStringList(imagePaths, "image_paths");
         for (const url of resolvedUrls) {
             if (!isProbablyUrl(url)) {
-                throw new Error(`image_urls 中包含无效链接: ${url}`);
+                throw new Error(L(`image_urls 中包含无效链接: ${url}`, `image_urls contains an invalid link: ${url}`));
             }
         }
         for (const filePath of resolvedPaths) {
@@ -393,7 +395,7 @@ const minimaxDraw = (function () {
         const statusCode = baseResp.status_code !== undefined ? Number(baseResp.status_code) : 0;
         if (Number.isFinite(statusCode) && statusCode !== 0) {
             const statusMsg = baseResp.status_msg ? String(baseResp.status_msg) : fallbackMessage;
-            throw new Error(`MiniMax 图片接口返回错误: ${statusMsg} (status_code=${statusCode})`);
+            throw new Error(L(`MiniMax 图片接口返回错误: ${statusMsg} (status_code=${statusCode})`, `MiniMax image API returned an error: ${statusMsg} (status_code=${statusCode})`));
         }
     }
     async function callMiniMaxImageApi(params) {
@@ -445,19 +447,19 @@ const minimaxDraw = (function () {
             .body(JSON.stringify(body), "json");
         const response = await request.build().execute();
         if (!response.isSuccessful()) {
-            throw new Error(`MiniMax 图片 API 调用失败: ${response.statusCode} - ${response.content}`);
+            throw new Error(L(`MiniMax 图片 API 调用失败: ${response.statusCode} - ${response.content}`, `MiniMax image API call failed: ${response.statusCode} - ${response.content}`));
         }
         let parsed;
         try {
             parsed = JSON.parse(response.content);
         }
         catch (error) {
-            throw new Error(`解析 MiniMax 响应失败: ${getErrorMessage(error)}`);
+            throw new Error(L(`解析 MiniMax 响应失败: ${getErrorMessage(error)}`, `Failed to parse MiniMax response: ${getErrorMessage(error)}`));
         }
-        parseMiniMaxError(parsed, "MiniMax 接口返回错误");
+        parseMiniMaxError(parsed, L("MiniMax 接口返回错误", "MiniMax API returned an error"));
         const data = isRecord(parsed) && isRecord(parsed.data) ? parsed.data : null;
         if (!data) {
-            throw new Error("MiniMax 响应中未找到 data 对象。");
+            throw new Error(L("MiniMax 响应中未找到 data 对象。", "data object not found in MiniMax response."));
         }
         const metadata = isRecord(data.metadata) ? data.metadata : null;
         const successCount = metadata && metadata.success_count !== undefined ? Number(metadata.success_count) : undefined;
@@ -468,7 +470,7 @@ const minimaxDraw = (function () {
                 ? data.image_base64.map(item => String(item || "").trim()).filter(item => item.length > 0)
                 : [];
             if (imageBase64.length === 0) {
-                throw new Error("MiniMax 响应中未找到 data.image_base64。");
+                throw new Error(L("MiniMax 响应中未找到 data.image_base64。", "data.image_base64 not found in MiniMax response."));
             }
             return {
                 request_id: requestId,
@@ -485,7 +487,7 @@ const minimaxDraw = (function () {
             ? data.image_urls.map(item => String(item || "").trim()).filter(item => item.length > 0)
             : [];
         if (imageUrls.length === 0) {
-            throw new Error("MiniMax 响应中未找到 data.image_urls。");
+            throw new Error(L("MiniMax 响应中未找到 data.image_urls。", "data.image_urls not found in MiniMax response."));
         }
         return {
             request_id: requestId,
@@ -501,7 +503,7 @@ const minimaxDraw = (function () {
     async function draw_image(params) {
         const prompt = String(params && params.prompt ? params.prompt : "").trim();
         if (!prompt) {
-            throw new Error("参数 prompt 不能为空。");
+            throw new Error(L("参数 prompt 不能为空。", "Parameter prompt cannot be empty."));
         }
         await ensureDirectories();
         const apiResult = await callMiniMaxImageApi({
@@ -527,7 +529,7 @@ const minimaxDraw = (function () {
                 const filePath = `${DRAWS_DIR}/${baseName}${suffix}.${DEFAULT_BASE64_EXTENSION}`;
                 const writeResult = await Tools.Files.writeBinary(filePath, normalizeBase64(apiResult.image_base64[index]));
                 if (!writeResult.successful) {
-                    throw new Error(`保存图片失败: ${writeResult.details}`);
+                    throw new Error(L(`保存图片失败: ${writeResult.details}`, `Failed to save image: ${writeResult.details}`));
                 }
                 const fileUri = `file://${filePath}`;
                 files.push({
@@ -546,7 +548,7 @@ const minimaxDraw = (function () {
                 const filePath = `${DRAWS_DIR}/${baseName}${suffix}.${extension}`;
                 const downloadResult = await Tools.Files.download(imageUrl, filePath);
                 if (!downloadResult.successful) {
-                    throw new Error(`下载图片失败: ${downloadResult.details}`);
+                    throw new Error(L(`下载图片失败: ${downloadResult.details}`, `Failed to download image: ${downloadResult.details}`));
                 }
                 const fileUri = `file://${filePath}`;
                 files.push({
@@ -558,13 +560,13 @@ const minimaxDraw = (function () {
             }
         }
         const hintLines = [];
-        hintLines.push(`图片已生成并保存在本地 ${DRAWS_DIR}。`);
-        hintLines.push(`共生成 ${files.length} 张。`);
+        hintLines.push(L(`图片已生成并保存在本地 ${DRAWS_DIR}。`, `The image was generated and saved locally in ${DRAWS_DIR}.`));
+        hintLines.push(L(`共生成 ${files.length} 张。`, `${files.length} image(s) generated in total.`));
         if (apiResult.reference_count > 0) {
-            hintLines.push(`本次使用了 ${apiResult.reference_count} 张参考图。`);
+            hintLines.push(L(`本次使用了 ${apiResult.reference_count} 张参考图。`, `${apiResult.reference_count} reference image(s) were used.`));
         }
         hintLines.push("");
-        hintLines.push("后续回答如果需要展示图片，请直接输出下面这些 Markdown：");
+        hintLines.push(L("后续回答如果需要展示图片，请直接输出下面这些 Markdown：", "If you need to show the images in later answers, output the following Markdown directly:"));
         hintLines.push("");
         for (const fileItem of files) {
             hintLines.push(fileItem.markdown);
@@ -589,7 +591,7 @@ const minimaxDraw = (function () {
             const result = await draw_image(params || {});
             complete({
                 success: true,
-                message: "MiniMax 图片生成成功，已保存到本地。",
+                message: L("MiniMax 图片生成成功，已保存到本地。", "MiniMax image generated successfully and saved locally."),
                 data: result
             });
         }
@@ -597,7 +599,7 @@ const minimaxDraw = (function () {
             console.error("draw_image 执行失败:", error);
             complete({
                 success: false,
-                message: `MiniMax 图片生成失败: ${getErrorMessage(error)}`,
+                message: L(`MiniMax 图片生成失败: ${getErrorMessage(error)}`, `MiniMax image generation failed: ${getErrorMessage(error)}`),
                 error_stack: error && error.stack ? error.stack : undefined
             });
         }

@@ -87,38 +87,40 @@
         }
     ]
 }*/
+const L = (zh, en) => (String(getLang() ?? "").toLowerCase().startsWith("zh") ? zh : en);
+
 const ExtendedFileTools = (function () {
     async function file_exists(params) {
         const result = await Tools.Files.exists(params.path, params.environment);
-        return { success: !!result && (result.exists ?? true), message: '检查完成', data: result };
+        return { success: !!result && (result.exists ?? true), message: L('检查完成', 'Check completed'), data: result };
     }
     async function move_file(params) {
         const result = await Tools.Files.move(params.source, params.destination, params.environment);
-        return { success: !!result, message: '移动完成', data: result };
+        return { success: !!result, message: L('移动完成', 'Move completed'), data: result };
     }
     async function copy_file(params) {
         const result = await Tools.Files.copy(params.source, params.destination, params.recursive, params.source_environment, params.dest_environment);
-        return { success: !!result, message: '复制完成', data: result };
+        return { success: !!result, message: L('复制完成', 'Copy completed'), data: result };
     }
     async function file_info(params) {
         const result = await Tools.Files.info(params.path, params.environment);
-        return { success: !!result, message: '获取信息完成', data: result };
+        return { success: !!result, message: L('获取信息完成', 'Info retrieved'), data: result };
     }
     async function zip_files(params) {
         const result = await Tools.Files.zip(params.source, params.destination, params.environment, params.include_root_directory);
-        return { success: !!result, message: '压缩完成', data: result };
+        return { success: !!result, message: L('压缩完成', 'Compression completed'), data: result };
     }
     async function unzip_files(params) {
         const result = await Tools.Files.unzip(params.source, params.destination, params.environment);
-        return { success: !!result, message: '解压完成', data: result };
+        return { success: !!result, message: L('解压完成', 'Extraction completed'), data: result };
     }
     async function open_file(params) {
         const result = await Tools.Files.open(params.path, params.environment);
-        return { success: !!result, message: '打开文件完成', data: result };
+        return { success: !!result, message: L('打开文件完成', 'File opened'), data: result };
     }
     async function share_file(params) {
         const result = await Tools.Files.share(params.path, params.title, params.environment);
-        return { success: !!result, message: '分享文件完成', data: result };
+        return { success: !!result, message: L('分享文件完成', 'File shared'), data: result };
     }
     async function wrapToolExecution(func, params) {
         try {
@@ -129,7 +131,7 @@ const ExtendedFileTools = (function () {
             console.error(`Tool ${func.name} failed unexpectedly`, error);
             complete({
                 success: false,
-                message: `工具执行时发生意外错误: ${error.message}`,
+                message: L(`工具执行时发生意外错误: ${error.message}`, `Unexpected error while executing tool: ${error.message}`),
             });
         }
     }

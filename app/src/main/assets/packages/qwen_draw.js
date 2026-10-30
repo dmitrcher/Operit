@@ -61,6 +61,8 @@
   ]
 }*/
 /// <reference path="./types/index.d.ts" />
+const L = (zh, en) => (String(getLang() ?? "").toLowerCase().startsWith("zh") ? zh : en);
+
 const qwenDraw = (function () {
     const HTTP_TIMEOUT_MS = 600000;
     const client = OkHttp.newBuilder()
@@ -104,7 +106,7 @@ const qwenDraw = (function () {
     function getApiKey() {
         const apiKey = getEnv("DASHSCOPE_API_KEY");
         if (!apiKey) {
-            throw new Error("DASHSCOPE_API_KEY 未配置，请在环境变量中设置 DashScope 的 API Key。");
+            throw new Error(L("DASHSCOPE_API_KEY 未配置，请在环境变量中设置 DashScope 的 API Key。", "DASHSCOPE_API_KEY is not configured, please set the DashScope API Key in environment variables."));
         }
         return apiKey;
     }
@@ -226,19 +228,19 @@ const qwenDraw = (function () {
             .body(JSON.stringify(body), "json");
         const response = await request.build().execute();
         if (!response.isSuccessful()) {
-            throw new Error(`DashScope 文生图创建任务失败: ${response.statusCode} - ${response.content}`);
+            throw new Error(L(`DashScope 文生图创建任务失败: ${response.statusCode} - ${response.content}`, `DashScope text-to-image task creation failed: ${response.statusCode} - ${response.content}`));
         }
         let parsed;
         try {
             parsed = JSON.parse(response.content);
         }
         catch (e) {
-            throw new Error(`解析 DashScope 创建任务响应失败: ${getErrorMessage(e)}`);
+            throw new Error(L(`解析 DashScope 创建任务响应失败: ${getErrorMessage(e)}`, `Failed to parse DashScope task creation response: ${getErrorMessage(e)}`));
         }
         const output = isRecord(parsed) && isRecord(parsed["output"]) ? parsed["output"] : null;
         const taskId = output && typeof output["task_id"] === "string" ? output["task_id"] : "";
         if (!taskId) {
-            throw new Error(`DashScope 创建任务响应中未找到 output.task_id: ${response.content}`);
+            throw new Error(L(`DashScope 创建任务响应中未找到 output.task_id: ${response.content}`, `output.task_id not found in DashScope task creation response: ${response.content}`));
         }
         return { task_id: taskId, effective_model: effectiveModel };
     }
@@ -263,14 +265,14 @@ const qwenDraw = (function () {
                 .headers(headers);
             const response = await request.build().execute();
             if (!response.isSuccessful()) {
-                throw new Error(`DashScope 查询任务失败: ${response.statusCode} - ${response.content}`);
+                throw new Error(L(`DashScope 查询任务失败: ${response.statusCode} - ${response.content}`, `DashScope task query failed: ${response.statusCode} - ${response.content}`));
             }
             let parsed;
             try {
                 parsed = JSON.parse(response.content);
             }
             catch (e) {
-                throw new Error(`解析 DashScope 查询任务响应失败: ${getErrorMessage(e)}`);
+                throw new Error(L(`解析 DashScope 查询任务响应失败: ${getErrorMessage(e)}`, `Failed to parse DashScope task query response: ${getErrorMessage(e)}`));
             }
             const output = isRecord(parsed) && isRecord(parsed["output"]) ? parsed["output"] : null;
             const taskStatus = output && typeof output["task_status"] === "string" ? String(output["task_status"]) : "";
@@ -279,23 +281,23 @@ const qwenDraw = (function () {
                 const first = Array.isArray(results) && results.length > 0 ? results[0] : null;
                 const url = isRecord(first) ? first["url"] : undefined;
                 if ((typeof url !== "string" && typeof url !== "number") || String(url).trim().length === 0) {
-                    throw new Error(`任务已完成但未找到图片 URL: ${response.content}`);
+                    throw new Error(L(`任务已完成但未找到图片 URL: ${response.content}`, `Task completed but no image URL was found: ${response.content}`));
                 }
                 return { image_url: String(url), task_status: taskStatus };
             }
             if (taskStatus === "FAILED") {
-                throw new Error(`任务失败: ${response.content}`);
+                throw new Error(L(`任务失败: ${response.content}`, `Task failed: ${response.content}`));
             }
             if (attempts % 5 === 0) {
                 console.log(`任务状态: ${taskStatus || "UNKNOWN"}，继续等待...`);
             }
             await Tools.System.sleep(pollIntervalMs);
         }
-        throw new Error(`任务超时: 等待超过${Math.ceil(maxWaitTimeMs / 60000)}分钟仍未完成`);
+        throw new Error(L(`任务超时: 等待超过${Math.ceil(maxWaitTimeMs / 60000)}分钟仍未完成`, `Task timed out: not finished after waiting more than ${Math.ceil(maxWaitTimeMs / 60000)} minute(s)`));
     }
     async function draw_image(params) {
         if (!params || !params.prompt || params.prompt.trim().length === 0) {
-            throw new Error("参数 prompt 不能为空。");
+            throw new Error(L("参数 prompt 不能为空。", "Parameter prompt cannot be empty."));
         }
         const prompt = params.prompt.trim();
         await ensureDirectories();
@@ -320,15 +322,15 @@ const qwenDraw = (function () {
         const filePath = `${DRAWS_DIR}/${baseName}.${ext}`;
         const downloadResult = await Tools.Files.download(pollResult.image_url, filePath);
         if (!downloadResult.successful) {
-            throw new Error(`下载图片失败: ${downloadResult.details}`);
+            throw new Error(L(`下载图片失败: ${downloadResult.details}`, `Failed to download image: ${downloadResult.details}`));
         }
         const fileUri = `file://${filePath}`;
-        const markdown = `![AI生成的图片](${fileUri})`;
+        const markdown = L(`![AI生成的图片](${fileUri})`, `![AI-generated image](${fileUri})`);
         const hintLines = [];
-        hintLines.push(`图片已生成并保存在本地 ${DRAWS_DIR}。`);
-        hintLines.push(`本地路径: ${filePath}`);
+        hintLines.push(L(`图片已生成并保存在本地 ${DRAWS_DIR}。`, `The image was generated and saved locally in ${DRAWS_DIR}.`));
+        hintLines.push(L(`本地路径: ${filePath}`, `Local path: ${filePath}`));
         hintLines.push("");
-        hintLines.push("在后续回答中，请直接输出下面这一行 Markdown 来展示这张图片：");
+        hintLines.push(L("在后续回答中，请直接输出下面这一行 Markdown 来展示这张图片：", "In your following answer, output the Markdown line below directly to show this image:"));
         hintLines.push("");
         hintLines.push(markdown);
         return {
@@ -348,7 +350,7 @@ const qwenDraw = (function () {
             const result = await draw_image(params);
             complete({
                 success: true,
-                message: `图片生成成功，已保存到 ${DRAWS_DIR}，并返回 Markdown 图片提示。`,
+                message: L(`图片生成成功，已保存到 ${DRAWS_DIR}，并返回 Markdown 图片提示。`, `Image generated successfully, saved to ${DRAWS_DIR}, and a Markdown image hint was returned.`),
                 data: result
             });
         }
@@ -356,7 +358,7 @@ const qwenDraw = (function () {
             console.error("draw_image 执行失败:", error);
             complete({
                 success: false,
-                message: `图片生成失败: ${getErrorMessage(error)}`,
+                message: L(`图片生成失败: ${getErrorMessage(error)}`, `Image generation failed: ${getErrorMessage(error)}`),
                 error_stack: getErrorStack(error)
             });
         }

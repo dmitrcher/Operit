@@ -103,6 +103,8 @@ METADATA
         }
     ]
 }*/
+const L = (zh, en) => (String(getLang() ?? "").toLowerCase().startsWith("zh") ? zh : en);
+
 const superAdmin = (function () {
     const MAX_INLINE_TERMINAL_OUTPUT_CHARS = 12000;
     const DEFAULT_FOREGROUND_TIMEOUT_MS = 15000;
@@ -170,7 +172,7 @@ const superAdmin = (function () {
     async function terminal(params) {
         try {
             if (!params.command) {
-                throw new Error("命令不能为空");
+                throw new Error(L("命令不能为空", "Command cannot be empty"));
             }
             const command = params.command;
             const background = params.background;
@@ -182,7 +184,7 @@ const superAdmin = (function () {
                 if (timeoutMs !== undefined) {
                     const parsedTimeout = parseInt(timeoutMs, 10);
                     if (!Number.isFinite(parsedTimeout) || parsedTimeout < MIN_TIMEOUT_MS) {
-                        throw new Error(`timeoutMs必须是整数且不少于${MIN_TIMEOUT_MS}毫秒`);
+                        throw new Error(L(`timeoutMs必须是整数且不少于${MIN_TIMEOUT_MS}毫秒`, `timeoutMs must be an integer and not less than ${MIN_TIMEOUT_MS} ms`));
                     }
                     timeout = parsedTimeout;
                 }
@@ -253,7 +255,7 @@ const superAdmin = (function () {
             if (timeoutMs !== undefined) {
                 const parsedTimeout = parseInt(timeoutMs, 10);
                 if (!Number.isFinite(parsedTimeout) || parsedTimeout < MIN_TIMEOUT_MS) {
-                    throw new Error(`timeoutMs必须是整数且不少于${MIN_TIMEOUT_MS}毫秒`);
+                    throw new Error(L(`timeoutMs必须是整数且不少于${MIN_TIMEOUT_MS}毫秒`, `timeoutMs must be an integer and not less than ${MIN_TIMEOUT_MS} ms`));
                 }
                 timeout = parsedTimeout;
             }
@@ -296,7 +298,7 @@ const superAdmin = (function () {
     async function shell(params) {
         try {
             if (!params.command) {
-                throw new Error("命令不能为空");
+                throw new Error(L("命令不能为空", "Command cannot be empty"));
             }
             const command = params.command;
             console.log(`执行Shell命令: ${command}`);
@@ -347,7 +349,7 @@ const superAdmin = (function () {
     async function terminal_input(params = {}) {
         try {
             if (params.input === undefined && params.control === undefined) {
-                throw new Error("input和control至少需要提供一个");
+                throw new Error(L("input和control至少需要提供一个", "At least one of input and control must be provided"));
             }
             const session = params.sessionId
                 ? { sessionId: params.sessionId }

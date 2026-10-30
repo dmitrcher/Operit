@@ -138,6 +138,8 @@
         }
     ]
 }*/
+const L = (zh, en) => (String(getLang() ?? "").toLowerCase().startsWith("zh") ? zh : en);
+
 const HistoryChat = (function () {
     function normalizeMatchMode(match) {
         const m = (match || '').trim().toLowerCase();
@@ -167,7 +169,7 @@ const HistoryChat = (function () {
         const chats = listResult.chats;
         return {
             success: true,
-            message: '对话列表获取完成',
+            message: L('对话列表获取完成', 'Chat list retrieved'),
             data: {
                 totalCount: listResult?.totalCount ?? chats.length,
                 currentChatId: listResult?.currentChatId ?? null,
@@ -196,7 +198,7 @@ const HistoryChat = (function () {
         }
         return {
             success: true,
-            message: '对话查找完成',
+            message: L('对话查找完成', 'Chat search completed'),
             data: {
                 chat: picked,
                 matchedCount: findResult?.matchedCount ?? 1,
@@ -248,7 +250,7 @@ const HistoryChat = (function () {
             .join('\n\n');
         return {
             success: true,
-            message: '读取对话消息完成',
+            message: L('读取对话消息完成', 'Chat messages read'),
             data: {
                 result,
                 text,
@@ -285,7 +287,7 @@ const HistoryChat = (function () {
             .join('\n\n');
         return {
             success: true,
-            message: '按区间读取对话消息完成',
+            message: L('按区间读取对话消息完成', 'Chat messages read by range'),
             data: {
                 result,
                 text,
@@ -301,7 +303,7 @@ const HistoryChat = (function () {
         const result = await Tools.Chat.updateTitle(chatId, newTitle);
         return {
             success: true,
-            message: '对话重命名完成',
+            message: L('对话重命名完成', 'Chat renamed'),
             data: {
                 chat_id: chatId,
                 title: newTitle,
@@ -314,7 +316,7 @@ const HistoryChat = (function () {
         const result = await Tools.Chat.deleteChat(chatId);
         return {
             success: true,
-            message: '对话删除完成',
+            message: L('对话删除完成', 'Chat deleted'),
             data: {
                 chat_id: chatId,
                 result,
@@ -329,7 +331,7 @@ const HistoryChat = (function () {
         const result = await Tools.Chat.agentStatus(chatId);
         return {
             success: true,
-            message: '对话状态查询完成',
+            message: L('对话状态查询完成', 'Chat status queried'),
             data: {
                 result,
             },
@@ -340,7 +342,7 @@ const HistoryChat = (function () {
         const cards = result.cards;
         return {
             success: true,
-            message: '角色卡列表获取完成',
+            message: L('角色卡列表获取完成', 'Character card list retrieved'),
             data: {
                 totalCount: result?.totalCount ?? cards.length,
                 cards,
@@ -382,7 +384,7 @@ const HistoryChat = (function () {
         let chatId = (params?.chat_id ?? '').toString().trim();
         if (!chatId) {
             const lang = (getLang() || '').toLowerCase();
-            const group = lang === 'zh' ? '子任务' : 'subTask';
+            const group = lang === 'zh' ? L('子任务', 'Subtask') : 'subTask';
             const creation = await Tools.Chat.createNew(group, false, characterCardId);
             chatId = (creation?.chatId ?? '').toString().trim();
             if (!chatId) {
@@ -397,7 +399,7 @@ const HistoryChat = (function () {
             });
             const boundName = findResult?.chat?.characterCardName ?? null;
             if (boundName && boundName !== characterCardName) {
-                throw new Error(`Chat ${chatId} 已绑定角色 ${boundName}，不能与 ${characterCardName} 共用会话`);
+                throw new Error(L(`Chat ${chatId} 已绑定角色 ${boundName}，不能与 ${characterCardName} 共用会话`, `Chat ${chatId} is already bound to character ${boundName} and cannot be shared with ${characterCardName}`));
             }
         }
         const timeoutRaw = params?.timeout !== undefined ? Number(params.timeout) : 180;
@@ -425,17 +427,17 @@ const HistoryChat = (function () {
         if (sendResult === null) {
             return {
                 success: true,
-                message: `已发送给 ${characterCardName}，等待响应超时（${timeoutSec}s）`,
+                message: L(`已发送给 ${characterCardName}，等待响应超时（${timeoutSec}s）`, `Sent to ${characterCardName}; timed out waiting for a response (${timeoutSec}s)`),
                 data: {
                     chat_id: chatId,
                     timeout: true,
-                    hint: '可以通过 agent_status 查看该 agent 是否已处理你的问题。',
+                    hint: L('可以通过 agent_status 查看该 agent 是否已处理你的问题。', 'You can use agent_status to check whether this agent has handled your question.'),
                 },
             };
         }
         return {
             success: true,
-            message: `发消息给 ${characterCardName}`,
+            message: L(`发消息给 ${characterCardName}`, `Message to ${characterCardName}`),
             data: {
                 chat_id: chatId,
                 result: sendResult,
@@ -452,7 +454,7 @@ const HistoryChat = (function () {
             console.error(`Tool ${func.name} failed unexpectedly`, error);
             complete({
                 success: false,
-                message: `读取对话消息失败: ${message}`,
+                message: L(`读取对话消息失败: ${message}`, `Failed to read chat messages: ${message}`),
             });
         }
     }
@@ -466,7 +468,7 @@ const HistoryChat = (function () {
             console.error(`Tool ${func.name} failed unexpectedly`, error);
             complete({
                 success: false,
-                message: `读取对话消息失败: ${message}`,
+                message: L(`读取对话消息失败: ${message}`, `Failed to read chat messages: ${message}`),
             });
         }
     }
@@ -500,7 +502,7 @@ const HistoryChat = (function () {
     async function main() {
         complete({
             success: true,
-            message: 'extended_chat 工具包已加载',
+            message: L('extended_chat 工具包已加载', 'extended_chat toolkit loaded'),
             data: {
                 hint: 'Use extended_chat:read_messages / rename_chat / delete_chat.',
             },

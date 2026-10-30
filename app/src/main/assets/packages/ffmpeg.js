@@ -39,6 +39,8 @@
         }
     ]
 }*/
+const L = (zh, en) => (String(getLang() ?? "").toLowerCase().startsWith("zh") ? zh : en);
+
 const FFmpegTools = (function () {
     async function ffmpeg_execute(params) {
         const result = await Tools.FFmpeg.execute(params.command);
@@ -78,7 +80,7 @@ const FFmpegTools = (function () {
             console.error(`Tool ${func.name} failed unexpectedly`, error);
             complete({
                 success: false,
-                message: `工具执行时发生意外错误: ${error.message}`,
+                message: L(`工具执行时发生意外错误: ${error.message}`, `Unexpected error while executing tool: ${error.message}`),
             });
         }
     }

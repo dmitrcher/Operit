@@ -87,6 +87,8 @@
   ]
 }*/
 /// <reference path="./types/index.d.ts" />
+const L = (zh, en) => (String(getLang() ?? "").toLowerCase().startsWith("zh") ? zh : en);
+
 const siliconflowDraw = (function () {
     const HTTP_TIMEOUT_MS = 600000;
     const client = OkHttp.newBuilder()
@@ -110,7 +112,7 @@ const siliconflowDraw = (function () {
     function getApiKey() {
         const apiKey = getEnv("SILICONFLOW_API_KEY");
         if (!apiKey) {
-            throw new Error("SILICONFLOW_API_KEY 未配置，请先在环境变量中设置硅基流动 API Key。");
+            throw new Error(L("SILICONFLOW_API_KEY 未配置，请先在环境变量中设置硅基流动 API Key。", "SILICONFLOW_API_KEY is not configured, please set the SiliconFlow API Key in environment variables first."));
         }
         return apiKey;
     }
@@ -206,7 +208,7 @@ const siliconflowDraw = (function () {
             return undefined;
         const numberValue = Number(value);
         if (!Number.isFinite(numberValue) || numberValue <= 0) {
-            throw new Error(`${fieldName} 必须是正整数。`);
+            throw new Error(L(`${fieldName} 必须是正整数。`, `${fieldName} must be a positive integer.`));
         }
         return Math.floor(numberValue);
     }
@@ -215,7 +217,7 @@ const siliconflowDraw = (function () {
             return undefined;
         const numberValue = Number(value);
         if (!Number.isFinite(numberValue)) {
-            throw new Error(`${fieldName} 必须是有效数字。`);
+            throw new Error(L(`${fieldName} 必须是有效数字。`, `${fieldName} must be a valid number.`));
         }
         return numberValue;
     }
@@ -224,7 +226,7 @@ const siliconflowDraw = (function () {
             return undefined;
         const numberValue = Number(value);
         if (!Number.isFinite(numberValue)) {
-            throw new Error("seed 必须是有效数字。");
+            throw new Error(L("seed 必须是有效数字。", "seed must be a valid number."));
         }
         return Math.floor(numberValue);
     }
@@ -234,14 +236,14 @@ const siliconflowDraw = (function () {
         const isQwenEditModel = trimmedModel.startsWith("qwen/qwen-image-edit");
         if (isQwenEditModel) {
             if (rawSize) {
-                throw new Error("当前模型为 Qwen 图像编辑模型，官方文档标注不支持 image_size 参数，请去掉 image_size。");
+                throw new Error(L("当前模型为 Qwen 图像编辑模型，官方文档标注不支持 image_size 参数，请去掉 image_size。", "The current model is a Qwen image-editing model; the official docs say image_size is not supported, please remove image_size."));
             }
             return undefined;
         }
         if (!rawSize)
             return DEFAULT_IMAGE_SIZE;
         if (!/^\d+x\d+$/i.test(rawSize)) {
-            throw new Error("image_size 格式必须是 widthxheight，例如 1024x1024。");
+            throw new Error(L("image_size 格式必须是 widthxheight，例如 1024x1024。", "image_size must be in the format widthxheight, for example 1024x1024."));
         }
         return rawSize.toLowerCase();
     }
@@ -250,7 +252,7 @@ const siliconflowDraw = (function () {
         if (!rawSize)
             return DEFAULT_VIDEO_SIZE;
         if (!VIDEO_SIZE_OPTIONS.includes(rawSize)) {
-            throw new Error(`image_size 仅支持 ${VIDEO_SIZE_OPTIONS.join("、")}。`);
+            throw new Error(L(`image_size 仅支持 ${VIDEO_SIZE_OPTIONS.join("、")}。`, `image_size only supports ${VIDEO_SIZE_OPTIONS.join(", ")}.`));
         }
         return rawSize;
     }
@@ -274,16 +276,16 @@ const siliconflowDraw = (function () {
     async function readLocalImageAsDataUrl(filePath) {
         const trimmedPath = String(filePath || "").trim();
         if (!trimmedPath) {
-            throw new Error("image_path 不能为空。");
+            throw new Error(L("image_path 不能为空。", "image_path cannot be empty."));
         }
         const existsResult = await Tools.Files.exists(trimmedPath);
         if (!existsResult.exists) {
-            throw new Error(`本地图片不存在: ${trimmedPath}`);
+            throw new Error(L(`本地图片不存在: ${trimmedPath}`, `Local image does not exist: ${trimmedPath}`));
         }
         const binaryResult = await Tools.Files.readBinary(trimmedPath);
         const base64Content = binaryResult && binaryResult.contentBase64 ? String(binaryResult.contentBase64).trim() : "";
         if (!base64Content) {
-            throw new Error(`读取本地图片失败: ${trimmedPath}`);
+            throw new Error(L(`读取本地图片失败: ${trimmedPath}`, `Failed to read local image: ${trimmedPath}`));
         }
         return `data:${guessMimeTypeFromPath(trimmedPath)};base64,${base64Content}`;
     }
@@ -291,11 +293,11 @@ const siliconflowDraw = (function () {
         const trimmedUrl = String(imageUrl || "").trim();
         const trimmedPath = String(imagePath || "").trim();
         if (trimmedUrl && trimmedPath) {
-            throw new Error("image_url 和 image_path 只能二选一，请不要同时传。");
+            throw new Error(L("image_url 和 image_path 只能二选一，请不要同时传。", "Use either image_url or image_path, not both."));
         }
         if (trimmedUrl) {
             if (!isProbablyUrl(trimmedUrl)) {
-                throw new Error("image_url 必须是 http 或 https 链接。");
+                throw new Error(L("image_url 必须是 http 或 https 链接。", "image_url must be an http or https link."));
             }
             return trimmedUrl;
         }
@@ -324,7 +326,7 @@ const siliconflowDraw = (function () {
             return JSON.parse(response.content);
         }
         catch (error) {
-            throw new Error(`解析响应 JSON 失败: ${getErrorMessage(error)}`);
+            throw new Error(L(`解析响应 JSON 失败: ${getErrorMessage(error)}`, `Failed to parse response JSON: ${getErrorMessage(error)}`));
         }
     }
     async function callImageApi(params) {
@@ -361,7 +363,7 @@ const siliconflowDraw = (function () {
             .map(item => item && item.url ? String(item.url).trim() : "")
             .filter(item => item.length > 0);
         if (imageUrls.length === 0) {
-            throw new Error("图片接口返回中未找到 images[].url，请检查模型与参数是否匹配。");
+            throw new Error(L("图片接口返回中未找到 images[].url，请检查模型与参数是否匹配。", "images[].url not found in the image API response, please check that the model and parameters match."));
         }
         return {
             effective_model: effectiveModel,
@@ -377,7 +379,7 @@ const siliconflowDraw = (function () {
         const defaultVideoModel = imageInput ? DEFAULT_VIDEO_IMAGE_MODEL : DEFAULT_VIDEO_TEXT_MODEL;
         const effectiveModel = modelFromParam || modelFromEnv || defaultVideoModel;
         if (effectiveModel === DEFAULT_VIDEO_IMAGE_MODEL && !imageInput) {
-            throw new Error(`当前模型 ${DEFAULT_VIDEO_IMAGE_MODEL} 为图生视频模型，必须传 image_url 或 image_path。`);
+            throw new Error(L(`当前模型 ${DEFAULT_VIDEO_IMAGE_MODEL} 为图生视频模型，必须传 image_url 或 image_path。`, `The current model ${DEFAULT_VIDEO_IMAGE_MODEL} is an image-to-video model, image_url or image_path is required.`));
         }
         const body = {
             model: effectiveModel,
@@ -395,7 +397,7 @@ const siliconflowDraw = (function () {
         const parsed = await executeJsonRequest(endpoint, body);
         const requestId = parsed && parsed.requestId ? String(parsed.requestId).trim() : "";
         if (!requestId) {
-            throw new Error("视频接口返回中未找到 requestId。");
+            throw new Error(L("视频接口返回中未找到 requestId。", "requestId not found in the video API response."));
         }
         return {
             api_base_url: apiBaseUrl,
@@ -425,7 +427,7 @@ const siliconflowDraw = (function () {
     async function draw_image(params) {
         const prompt = String(params && params.prompt ? params.prompt : "").trim();
         if (!prompt) {
-            throw new Error("prompt 不能为空。");
+            throw new Error(L("prompt 不能为空。", "prompt cannot be empty."));
         }
         await ensureDirectories();
         const apiResult = await callImageApi(params);
@@ -438,7 +440,7 @@ const siliconflowDraw = (function () {
             const filePath = `${DRAWS_DIR}/${baseName}${suffix}.${extension}`;
             const downloadResult = await Tools.Files.download(imageUrl, filePath);
             if (!downloadResult.successful) {
-                throw new Error(`下载图片失败: ${downloadResult.details}`);
+                throw new Error(L(`下载图片失败: ${downloadResult.details}`, `Failed to download image: ${downloadResult.details}`));
             }
             const fileUri = `file://${filePath}`;
             files.push({
@@ -448,10 +450,10 @@ const siliconflowDraw = (function () {
             });
         }
         const hintLines = [];
-        hintLines.push(`图片已生成并下载到 ${DRAWS_DIR}。`);
-        hintLines.push(`共生成 ${files.length} 张。`);
+        hintLines.push(L(`图片已生成并下载到 ${DRAWS_DIR}。`, `The image was generated and downloaded to ${DRAWS_DIR}.`));
+        hintLines.push(L(`共生成 ${files.length} 张。`, `${files.length} image(s) generated in total.`));
         hintLines.push("");
-        hintLines.push("后续回答如果需要展示图片，请直接输出下面这些 Markdown：");
+        hintLines.push(L("后续回答如果需要展示图片，请直接输出下面这些 Markdown：", "If you need to show the images in later answers, output the following Markdown directly:"));
         hintLines.push("");
         for (const fileItem of files) {
             hintLines.push(fileItem.markdown);
@@ -470,7 +472,7 @@ const siliconflowDraw = (function () {
     async function draw_video(params) {
         const prompt = String(params && params.prompt ? params.prompt : "").trim();
         if (!prompt) {
-            throw new Error("prompt 不能为空。");
+            throw new Error(L("prompt 不能为空。", "prompt cannot be empty."));
         }
         await ensureDirectories();
         const imageInput = await resolveVideoImageInput(params.image_url, params.image_path);
@@ -491,12 +493,12 @@ const siliconflowDraw = (function () {
             if (normalizedStatus === "succeed") {
                 remoteVideoUrl = statusResult.video_url;
                 if (!remoteVideoUrl) {
-                    throw new Error("视频任务已成功，但返回中未找到 results.videos[0].url。");
+                    throw new Error(L("视频任务已成功，但返回中未找到 results.videos[0].url。", "The video task succeeded, but results.videos[0].url was not found in the response."));
                 }
                 break;
             }
             if (normalizedStatus === "failed") {
-                throw new Error(`视频生成失败: ${latestReason || "接口未返回失败原因"}`);
+                throw new Error(L(`视频生成失败: ${latestReason || "接口未返回失败原因"}`, `Video generation failed: ${latestReason || "the API returned no failure reason"}`));
             }
             await Tools.System.sleep(pollIntervalMs);
         }
@@ -508,19 +510,19 @@ const siliconflowDraw = (function () {
         const filePath = `${VIDEOS_DIR}/${baseName}.${extension}`;
         const downloadResult = await Tools.Files.download(remoteVideoUrl, filePath);
         if (!downloadResult.successful) {
-            throw new Error(`下载视频失败: ${downloadResult.details}`);
+            throw new Error(L(`下载视频失败: ${downloadResult.details}`, `Failed to download video: ${downloadResult.details}`));
         }
         const fileUri = `file://${filePath}`;
-        const markdownLink = `[点击查看生成的视频](${fileUri})`;
+        const markdownLink = L(`[点击查看生成的视频](${fileUri})`, `[Click to view the generated video](${fileUri})`);
         const htmlVideo = `<video controls src="${fileUri}"></video>`;
         const hintLines = [];
-        hintLines.push(`视频已生成并下载到 ${VIDEOS_DIR}。`);
-        hintLines.push(`本地路径: ${filePath}`);
+        hintLines.push(L(`视频已生成并下载到 ${VIDEOS_DIR}。`, `The video was generated and downloaded to ${VIDEOS_DIR}.`));
+        hintLines.push(L(`本地路径: ${filePath}`, `Local path: ${filePath}`));
         hintLines.push("");
-        hintLines.push("后续回答如果要给出视频，请优先返回这个本地链接：");
+        hintLines.push(L("后续回答如果要给出视频，请优先返回这个本地链接：", "If you need to give the video in later answers, return this local link first:"));
         hintLines.push(markdownLink);
         hintLines.push("");
-        hintLines.push("如果当前渲染环境支持 HTML 视频标签，也可以使用：");
+        hintLines.push(L("如果当前渲染环境支持 HTML 视频标签，也可以使用：", "If the current rendering environment supports the HTML video tag, you can also use:"));
         hintLines.push(htmlVideo);
         return {
             prompt,
@@ -540,7 +542,7 @@ const siliconflowDraw = (function () {
             const result = await draw_image(params || {});
             complete({
                 success: true,
-                message: "SiliconFlow 图片生成成功，已下载到本地。",
+                message: L("SiliconFlow 图片生成成功，已下载到本地。", "SiliconFlow image generated successfully and downloaded locally."),
                 data: result
             });
         }
@@ -548,7 +550,7 @@ const siliconflowDraw = (function () {
             console.error("draw_image 执行失败:", error);
             complete({
                 success: false,
-                message: `SiliconFlow 图片生成失败: ${getErrorMessage(error)}`,
+                message: L(`SiliconFlow 图片生成失败: ${getErrorMessage(error)}`, `SiliconFlow image generation failed: ${getErrorMessage(error)}`),
                 error_stack: error && error.stack ? error.stack : undefined
             });
         }
@@ -558,7 +560,7 @@ const siliconflowDraw = (function () {
             const result = await draw_video(params || {});
             complete({
                 success: true,
-                message: "SiliconFlow 视频生成成功，已下载到本地。",
+                message: L("SiliconFlow 视频生成成功，已下载到本地。", "SiliconFlow video generated successfully and downloaded locally."),
                 data: result
             });
         }
@@ -566,7 +568,7 @@ const siliconflowDraw = (function () {
             console.error("draw_video 执行失败:", error);
             complete({
                 success: false,
-                message: `SiliconFlow 视频生成失败: ${getErrorMessage(error)}`,
+                message: L(`SiliconFlow 视频生成失败: ${getErrorMessage(error)}`, `SiliconFlow video generation failed: ${getErrorMessage(error)}`),
                 error_stack: error && error.stack ? error.stack : undefined
             });
         }

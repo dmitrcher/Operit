@@ -46,6 +46,8 @@
         }
     ]
 }*/
+const L = (zh, en) => (String(getLang() ?? "").toLowerCase().startsWith("zh") ? zh : en);
+
 const googleSearch = (function () {
     const GOOGLE_SEARCH_URL = "https://www.google.com/search";
     const GOOGLE_SCHOLAR_URL = "https://scholar.google.com/scholar";
@@ -99,20 +101,20 @@ const googleSearch = (function () {
             parts.push(content);
             return {
                 success: true,
-                message: `${sourceName} 搜索成功`,
+                message: L(`${sourceName} 搜索成功`, `${sourceName} search succeeded`),
                 data: parts.join('\n\n')
             };
         }
         catch (error) {
             return {
                 success: false,
-                message: `${sourceName} 搜索失败: ${error.message}`
+                message: L(`${sourceName} 搜索失败: ${error.message}`, `${sourceName} search failed: ${error.message}`)
             };
         }
     }
     async function searchWeb(params) {
         if (!params.query || params.query.trim() === "") {
-            throw new Error("请提供有效的 query 参数。");
+            throw new Error(L("请提供有效的 query 参数。", "Please provide a valid query parameter."));
         }
         const maxResults = Math.min(Math.max(params.max_results || 10, 1), MAX_RESULTS);
         const language = params.language || "en";
@@ -128,7 +130,7 @@ const googleSearch = (function () {
     }
     async function searchScholar(params) {
         if (!params.query || params.query.trim() === "") {
-            throw new Error("请提供有效的 query 参数。");
+            throw new Error(L("请提供有效的 query 参数。", "Please provide a valid query parameter."));
         }
         const maxResults = Math.min(Math.max(params.max_results || 10, 1), MAX_RESULTS);
         const language = params.language || "en";
@@ -142,7 +144,7 @@ const googleSearch = (function () {
     }
     async function searchScholarMirror(params) {
         if (!params.query || params.query.trim() === "") {
-            throw new Error("请提供有效的 query 参数。");
+            throw new Error(L("请提供有效的 query 参数。", "Please provide a valid query parameter."));
         }
         const maxResults = Math.min(Math.max(params.max_results || 10, 1), MAX_RESULTS);
         const language = params.language || "en";
@@ -155,13 +157,13 @@ const googleSearch = (function () {
         if (mirrorUrls.length === 0) {
             return {
                 success: false,
-                message: "没有可用的 Google Scholar 镜像地址。"
+                message: L("没有可用的 Google Scholar 镜像地址。", "No Google Scholar mirror addresses are available.")
             };
         }
         let lastError = null;
         for (const currentUrl of mirrorUrls) {
             try {
-                const searchResult = await performSearch(currentUrl, params.includeLinks, `Google Scholar 镜像 (${getHostname(currentUrl)})`);
+                const searchResult = await performSearch(currentUrl, params.includeLinks, L(`Google Scholar 镜像 (${getHostname(currentUrl)})`, `Google Scholar mirror (${getHostname(currentUrl)})`));
                 if (searchResult.success && searchResult.data) {
                     // Check for CAPTCHA in the content
                     if (searchResult.data.includes("recaptcha") || searchResult.data.includes("人机身份验证")) {
@@ -178,7 +180,7 @@ const googleSearch = (function () {
         }
         return {
             success: false,
-            message: `Google Scholar 镜像搜索在尝试所有镜像后失败: ${lastError?.message || 'Unknown error'}`
+            message: L(`Google Scholar 镜像搜索在尝试所有镜像后失败: ${lastError?.message || 'Unknown error'}`, `Google Scholar mirror search failed after trying all mirrors: ${lastError?.message || 'Unknown error'}`)
         };
     }
     async function main() {
